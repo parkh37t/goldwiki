@@ -1,0 +1,18 @@
+# Render.com 배포 청사진 — ClubSchool AI OS 콘솔
+# 사용: Render 대시보드 → New → Blueprint → 이 저장소 선택 (rootDir: ClubSchool-AI-OS)
+services:
+  - type: web
+    name: clubschool-ai-os-console
+    runtime: python
+    rootDir: ClubSchool-AI-OS
+    plan: free
+    buildCommand: "python3 Console/build-manifest.py"
+    startCommand: "python3 server/app.py"
+    autoDeploy: true
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false          # 대시보드에서 비밀값으로 직접 입력
+      - key: CS_MODEL
+        value: claude-opus-4-8
+      - key: PYTHON_VERSION
+        value: "3.12.5"

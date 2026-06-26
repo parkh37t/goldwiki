@@ -11,6 +11,7 @@ const S = {
   settings: loadSettings(),
   active: null,        // 현재 작업 패널 컨텍스트 {kind, name, systemPrompt, path}
   chat: [],            // {role, content}
+  backend: null,       // /api/health 결과 (서버 모드면 객체, 아니면 null)
 };
 
 /* ---------- 유틸 ---------- */
@@ -49,11 +50,18 @@ function stripFrontmatter(t) { return (t || '').replace(/^---\n[\s\S]*?\n---\n/,
 
 /* ---------- 부트 ---------- */
 async function boot() {
+  // 백엔드 서버 감지 (server/app.py 로 서빙 시 /api/health 200)
   try {
-    const r = await fetch('manifest.json');
+    const h = await fetch('/api/health', { cache: 'no-store' });
+    if (h.ok) { const j = await h.json(); if (j && j.ok) S.backend = j; }
+  } catch { /* 정적 서빙 — 무시 */ }
+
+  // manifest: 서버 모드면 /api/manifest, 아니면 정적 파일
+  try {
+    const r = await fetch(S.backend ? '/api/manifest' : 'manifest.json', { cache: 'no-store' });
     S.manifest = await r.json();
   } catch (e) {
-    $('#view').innerHTML = errorBox('manifest.json 을 불러오지 못했습니다. <br>ClubSchool-AI-OS/ 에서 <code>python3 Console/build-manifest.py</code> 실행 후, <code>python3 -m http.server</code> 로 서빙하고 <code>/Console/</code> 를 여세요.');
+    $('#view').innerHTML = errorBox('manifest 를 불러오지 못했습니다. <br>ClubSchool-AI-OS/ 에서 <code>python3 Console/build-manifest.py</code> 실행 후, <code>python3 server/app.py</code> (권장) 또는 <code>python3 -m http.server</code> 로 서빙하고 <code>/Console/</code> 를 여세요.');
     return;
   }
   $('#version-tag').textContent = '콘솔 · ' + (S.manifest.product || 'ClubSchool AI OS');
@@ -87,11 +95,20 @@ function go(view) {
      goldwiki: viewGoldwiki, templates: viewTemplates, examples: viewExamples, qa: viewQA, settings: viewSettings }[view] || viewDashboard)(V);
 }
 
+function chatMode() {
+  // 'server'  : 백엔드 프록시 사용 (서버에 키 있음)
+  // 'direct'  : 브라우저에서 직접 Anthropic 호출 (콘솔 설정에 키 있음)
+  // 'prompt'  : 키 없음 → 실행 프롬프트 복사
+  if (S.backend && S.backend.hasKey) return 'server';
+  if (S.settings.apiKey) return 'direct';
+  return 'prompt';
+}
 function refreshConn() {
-  const on = !!(S.settings.apiKey);
+  const mode = chatMode();
   const el = $('#conn-state');
-  el.textContent = on ? '● API 연결됨' : '● 프롬프트 모드';
-  el.className = 'conn-pill ' + (on ? 'conn-on' : 'conn-off');
+  const label = { server: '● 서버 연결됨', direct: '● API 연결됨', prompt: '● 프롬프트 모드' }[mode];
+  el.textContent = label;
+  el.className = 'conn-pill ' + (mode === 'prompt' ? 'conn-off' : 'conn-on');
 }
 
 /* ---------- 대시보드 ---------- */
@@ -149,12 +166,14 @@ function viewAgents(V) {
 }
 
 async function openAgent(a) {
-  let md = '';
-  try { md = await fetchText(a.path); } catch (e) { md = '에이전트 정의를 불러오지 못했습니다: ' + e.message; }
-  S.active = { kind: 'agent', name: a.name, path: a.path, systemPrompt: stripFrontmatter(md), raw: md };
+  let sys = a.systemPrompt; // manifest 내장(정적 호스트 호환)
+  if (!sys) { try { sys = stripFrontmatter(await fetchText(a.path)); } catch (e) { sys = '에이전트 정의를 불러오지 못했습니다: ' + e.message; } }
+  S.active = { kind: 'agent', name: a.name, path: a.path, systemPrompt: sys, raw: sys };
   S.chat = [];
   openPanel(a.name, '에이전트 · ' + a.path);
-  pushSys(`이 패널은 **${a.name}** 에이전트입니다. 작업을 입력하면 ${S.settings.apiKey ? 'API로 직접 응답합니다.' : '실행 프롬프트를 만들어 드립니다(설정에서 API 키 입력 시 직접 대화).'}\n\n에이전트 정의는 GoldWiki를 단일 진실 공급원으로 따릅니다.`);
+  const m = chatMode();
+  const how = { server: '서버를 통해 바로 응답합니다.', direct: '브라우저에서 바로 응답합니다.', prompt: '실행 프롬프트를 만들어 드립니다(서버에 키 설정 또는 설정에서 키 입력 시 직접 대화).' }[m];
+  pushSys(`이 패널은 **${a.name}** 에이전트입니다. 작업을 입력하면 ${how}\n\n에이전트 정의는 GoldWiki를 단일 진실 공급원으로 따릅니다.`);
 }
 
 /* ---------- 커맨드 ---------- */
@@ -173,9 +192,9 @@ function openCommandByName(name) {
   if (c) openCommand(c); else toast(name + ' 커맨드를 찾을 수 없습니다.');
 }
 async function openCommand(c) {
-  let md = '';
-  try { md = await fetchText(c.path); } catch (e) { md = '커맨드를 불러오지 못했습니다: ' + e.message; }
-  S.active = { kind: 'command', name: c.name, path: c.path, systemPrompt: ORCH_SYSTEM, body: stripFrontmatter(md), hint: c.argumentHint };
+  let body = c.body; // manifest 내장
+  if (!body) { try { body = stripFrontmatter(await fetchText(c.path)); } catch (e) { body = '커맨드를 불러오지 못했습니다: ' + e.message; } }
+  S.active = { kind: 'command', name: c.name, path: c.path, systemPrompt: ORCH_SYSTEM, body, hint: c.argumentHint };
   S.chat = [];
   openPanel(c.name, '커맨드 · ' + c.path);
   $('#wp-input').placeholder = c.argumentHint ? ('인자: ' + c.argumentHint) : '이 커맨드에 전달할 입력(예: RFP 본문/경로)을 적으세요.';
@@ -382,38 +401,57 @@ async function sendMessage() {
   $('#wp-input').value = '';
   addMsg('user', text);
 
-  if (!S.settings.apiKey) {
+  const mode = chatMode();
+  if (mode === 'prompt') {
     const full = buildPrompt(text);
     navigator.clipboard.writeText(full);
-    pushSys('API 키가 없어 **프롬프트 복사 모드**로 동작했습니다. 실행 프롬프트를 클립보드에 복사했어요. 직접 대화하려면 설정에서 키를 입력하세요.');
+    pushSys('실행 프롬프트를 클립보드에 복사했습니다. Claude Code/claude.ai 에 붙여넣어 실행하세요. (서버에 API 키를 설정하거나 콘솔 설정에 키를 넣으면 여기서 바로 대화합니다.)');
     return;
   }
   const loading = addMsg('bot', '_생각 중…_');
   try {
-    const reply = await callAnthropic(text);
+    const reply = (mode === 'server') ? await callBackend(text) : await callAnthropicDirect(text);
     loading.querySelector('.md').innerHTML = renderMd(reply);
     S.chat[S.chat.length - 1].content = reply;
   } catch (e) {
-    loading.querySelector('.md').innerHTML = renderMd('⚠️ 호출 실패: ' + e.message + '\n\n키/모델/네트워크를 확인하세요. (브라우저 직접 호출은 CORS 정책상 일부 환경에서 제한될 수 있습니다.)');
+    loading.querySelector('.md').innerHTML = renderMd('⚠️ 호출 실패: ' + e.message + '\n\n키/모델/네트워크를 확인하세요.');
   }
 }
 
-async function callAnthropic(userText) {
+function buildSystemAndHistory(userText) {
   const a = S.active;
-  // 시스템 프롬프트: 에이전트 정의 또는 오케스트레이터 + 거버넌스
   let system = (a && a.kind === 'agent') ? a.systemPrompt : ORCH_SYSTEM;
   if ($('#wp-usewiki').checked) system += '\n\n' + wikiIndexNote();
   if (S.settings.lang !== 'en') system += '\n\n반드시 한국어로, 전문적이고 실무적으로 답하세요.';
-
-  // 사용자 메시지: 커맨드/문서 컨텍스트가 있으면 결합
   let umsg = userText;
   if (a && (a.kind === 'command' || a.kind === 'doc')) umsg = buildPrompt(userText);
-
   const history = S.chat.filter(m => m.role === 'user' || m.role === 'bot')
-    .slice(0, -1) // 방금 추가한 로딩 bot 제외
+    .slice(0, -1)
     .map(m => ({ role: m.role === 'bot' ? 'assistant' : 'user', content: m.content }));
   history.push({ role: 'user', content: umsg });
+  return { system, history };
+}
 
+/* 서버 프록시 경유 (배포 환경 권장 — 브라우저에 키 불필요) */
+async function callBackend(userText) {
+  const { system, history } = buildSystemAndHistory(userText);
+  const res = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      model: S.settings.model || (S.backend && S.backend.model) || 'claude-opus-4-8',
+      max_tokens: S.settings.maxTokens || 4096,
+      system, messages: history,
+    }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+  return data.text || '(빈 응답)';
+}
+
+/* 브라우저 직접 호출 (로컬/개인용 — 콘솔 설정의 키 사용) */
+async function callAnthropicDirect(userText) {
+  const { system, history } = buildSystemAndHistory(userText);
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -425,8 +463,7 @@ async function callAnthropic(userText) {
     body: JSON.stringify({
       model: S.settings.model || 'claude-opus-4-8',
       max_tokens: S.settings.maxTokens || 4096,
-      system,
-      messages: history,
+      system, messages: history,
     }),
   });
   if (!res.ok) {

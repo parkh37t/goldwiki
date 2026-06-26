@@ -13,6 +13,10 @@ def read(p):
     with open(p, encoding="utf-8") as f:
         return f.read()
 
+def strip_fm(text):
+    return re.sub(r"^---\n.*?\n---\n", "", text, count=1, flags=re.S)
+
+
 def frontmatter(text):
     m = re.match(r"^---\n(.*?)\n---\n", text, re.S)
     fm = {}
@@ -56,6 +60,8 @@ for p in sorted(glob.glob(os.path.join(ROOT, ".claude/agents/*.md"))):
         "description": fm.get("description", ""),
         "tools": fm.get("tools", ""),
         "path": rel(p),
+        # 본문 내장: 정적 호스트(Vercel/Pages)에서 .claude 폴더가 서빙되지 않아도 동작하도록
+        "systemPrompt": strip_fm(t).strip(),
     })
 
 # 슬래시 커맨드
@@ -66,6 +72,7 @@ for p in sorted(glob.glob(os.path.join(ROOT, ".claude/commands/*.md"))):
         "description": fm.get("description", title_from(p, t)),
         "argumentHint": fm.get("argument-hint", ""),
         "path": rel(p),
+        "body": strip_fm(t).strip(),
     })
 
 # 워크플로우 (사람용 런북)
