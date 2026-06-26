@@ -26,9 +26,12 @@ create table if not exists jobs (
   input       text,
   status      text not null default 'queued',-- queued|running|review|done|failed
   qa_score    int,                           -- QA 루프 채점(0~100)
+  created_by  uuid,                          -- auth.users.id (소유자, RLS 기준)
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );
+-- 이미 생성된 테이블 보정(재실행 안전)
+alter table jobs add column if not exists created_by uuid;
 
 -- 대화 메시지(에이전트 세션)
 create table if not exists chat_messages (
