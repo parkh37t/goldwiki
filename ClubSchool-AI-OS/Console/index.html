@@ -70,19 +70,35 @@
     </aside>
   </div>
 
-  <!-- 로그인 게이트 (Supabase 설정 시 표시) -->
+  <!-- 로그인/회원가입 게이트 (Supabase 설정 시 표시) -->
   <div id="auth-gate" class="auth-gate hidden">
     <div class="auth-card">
       <div class="auth-brand"><div class="brand-mark">CS</div><strong>ClubSchool AI OS</strong></div>
-      <p class="auth-sub">계속하려면 로그인하세요.</p>
-      <input id="auth-email" type="email" placeholder="이메일" autocomplete="username" />
-      <input id="auth-pass" type="password" placeholder="비밀번호" autocomplete="current-password" />
-      <div id="auth-msg" class="auth-msg"></div>
-      <div class="auth-actions">
-        <button id="auth-signin" class="btn primary">로그인</button>
-        <button id="auth-signup" class="btn">회원가입</button>
+
+      <!-- 모드 탭 -->
+      <div class="auth-tabs">
+        <button id="tab-login" class="auth-tab active" type="button">로그인</button>
+        <button id="tab-signup" class="auth-tab" type="button">회원가입</button>
       </div>
-      <button id="auth-skip" class="btn ghost auth-skip">로그인 없이 둘러보기</button>
+
+      <!-- 입력 폼 -->
+      <div id="auth-form">
+        <p id="auth-sub" class="auth-sub">계정에 로그인하세요.</p>
+        <input id="auth-email" type="email" placeholder="이메일" autocomplete="email" />
+        <input id="auth-pass" type="password" placeholder="비밀번호 (6자 이상)" autocomplete="current-password" />
+        <div id="auth-msg" class="auth-msg"></div>
+        <button id="auth-submit" class="btn primary auth-submit" type="button">로그인</button>
+      </div>
+
+      <!-- 회원가입 완료(이메일 인증 필요) 상태 -->
+      <div id="auth-done" class="auth-done hidden">
+        <div class="auth-done-icon">✉️</div>
+        <p class="auth-done-title">가입이 거의 끝났어요!</p>
+        <p class="auth-done-text"><b id="auth-done-email"></b> 로 보낸 인증 메일의 링크를 클릭한 뒤 로그인하세요.</p>
+        <button id="auth-back" class="btn primary auth-submit" type="button">로그인하러 가기</button>
+      </div>
+
+      <button id="auth-skip" class="btn ghost auth-skip" type="button">로그인 없이 둘러보기</button>
     </div>
   </div>
 

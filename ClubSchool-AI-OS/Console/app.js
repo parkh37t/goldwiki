@@ -14,6 +14,7 @@ const S = {
   backend: null,       // /api/health 결과 (서버 모드면 객체, 아니면 null)
   config: null,        // /api/config (Supabase 공개 설정)
   user: null,          // 로그인 사용자
+  authMode: 'login',   // 'login' | 'signup'
 };
 
 /* ---------- 유틸 ---------- */
@@ -92,26 +93,63 @@ async function initAuth() {
   if (CSDB.cfg().enabled && !S.user && !sessionStorage.getItem('cs.skipAuth')) showAuthGate(true);
 }
 function wireAuth() {
-  const gate = $('#auth-gate');
-  $('#auth-signin').onclick = () => doAuth('in');
-  $('#auth-signup').onclick = () => doAuth('up');
+  $('#tab-login').onclick = () => setAuthMode('login');
+  $('#tab-signup').onclick = () => setAuthMode('signup');
+  $('#auth-submit').onclick = doAuth;
+  $('#auth-back').onclick = () => { $('#auth-done').classList.add('hidden'); $('#auth-form').classList.remove('hidden'); setAuthMode('login'); };
   $('#auth-skip').onclick = () => { sessionStorage.setItem('cs.skipAuth', '1'); showAuthGate(false); toast('읽기 전용으로 둘러봅니다. 저장 기능은 로그인 후 사용하세요.'); };
-  $('#auth-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doAuth('in'); });
+  $('#auth-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doAuth(); });
 }
-function showAuthGate(on) { $('#auth-gate').classList.toggle('hidden', !on); }
-async function doAuth(kind) {
+function setAuthMode(mode) {
+  S.authMode = mode;
+  const login = mode === 'login';
+  $('#tab-login').classList.toggle('active', login);
+  $('#tab-signup').classList.toggle('active', !login);
+  $('#auth-sub').textContent = login ? '계정에 로그인하세요.' : '새 계정을 만드세요. 이메일과 비밀번호(6자 이상)만 있으면 됩니다.';
+  $('#auth-submit').textContent = login ? '로그인' : '회원가입';
+  $('#auth-pass').setAttribute('autocomplete', login ? 'current-password' : 'new-password');
+  const msg = $('#auth-msg'); msg.textContent = ''; msg.className = 'auth-msg';
+}
+function showAuthGate(on) {
+  $('#auth-gate').classList.toggle('hidden', !on);
+  if (on) { $('#auth-done').classList.add('hidden'); $('#auth-form').classList.remove('hidden'); setAuthMode(S.authMode || 'login'); setTimeout(() => $('#auth-email').focus(), 50); }
+}
+function authError(raw) {
+  const m = (raw || '').toLowerCase();
+  if (m.includes('email not confirmed')) return '이메일 인증이 필요합니다. 받은 인증 메일의 링크를 클릭한 뒤 로그인하세요. (메일이 없으면 회원가입을 다시 하거나 관리자에게 문의)';
+  if (m.includes('invalid login') || m.includes('invalid credentials')) return '이메일 또는 비밀번호가 올바르지 않습니다.';
+  if (m.includes('already registered') || m.includes('user already')) return '이미 가입된 이메일입니다. 로그인 탭에서 로그인하세요.';
+  if (m.includes('password') && m.includes('6')) return '비밀번호는 6자 이상이어야 합니다.';
+  if (m.includes('connect') || m.includes('failed to fetch')) return raw; // 이미 친절한 안내
+  return raw;
+}
+async function doAuth() {
+  const mode = S.authMode || 'login';
   const email = $('#auth-email').value.trim(), pass = $('#auth-pass').value;
-  const msg = $('#auth-msg'); msg.textContent = '';
+  const msg = $('#auth-msg'); msg.textContent = ''; msg.className = 'auth-msg';
+  const btn = $('#auth-submit');
   if (!email || !pass) { msg.textContent = '이메일과 비밀번호를 입력하세요.'; return; }
+  btn.disabled = true; btn.textContent = mode === 'login' ? '로그인 중…' : '가입 중…';
   try {
-    if (kind === 'up') {
+    if (mode === 'signup') {
       const d = await CSDB.signUp(email, pass);
-      if (!d.access_token) { msg.style.color = 'var(--ok)'; msg.textContent = '가입 완료. 이메일 확인 후 로그인하세요.'; return; }
-    } else { await CSDB.signIn(email, pass); }
+      if (!d.access_token) { // 이메일 인증 필요
+        $('#auth-done-email').textContent = email;
+        $('#auth-form').classList.add('hidden');
+        $('#auth-done').classList.remove('hidden');
+        return;
+      }
+    } else {
+      await CSDB.signIn(email, pass);
+    }
     S.user = CSDB.user(); showAuthGate(false); refreshUser(); refreshConn();
-    toast('로그인되었습니다: ' + (S.user && S.user.email || ''));
+    toast('환영합니다, ' + (S.user && S.user.email || '') + '님');
     go(S.view);
-  } catch (e) { msg.style.color = 'var(--err)'; msg.textContent = '실패: ' + e.message; }
+  } catch (e) {
+    msg.className = 'auth-msg'; msg.textContent = authError(e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = mode === 'login' ? '로그인' : '회원가입';
+  }
 }
 function refreshUser() {
   const el = $('#user-state');
