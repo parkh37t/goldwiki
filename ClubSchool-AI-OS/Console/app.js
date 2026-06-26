@@ -58,9 +58,10 @@ async function boot() {
     if (h.ok) { const j = await h.json(); if (j && j.ok) S.backend = j; }
   } catch { /* 정적 서빙 — 무시 */ }
 
-  // manifest: 서버 모드면 /api/manifest, 아니면 정적 파일
+  // manifest: 정적 파일을 직접 로드(Vercel/Pages/서버 모두 호환). 실패 시 /api/manifest 폴백.
   try {
-    const r = await fetch(S.backend ? '/api/manifest' : 'manifest.json', { cache: 'no-store' });
+    let r = await fetch('manifest.json', { cache: 'no-store' });
+    if (!r.ok && S.backend) r = await fetch('/api/manifest', { cache: 'no-store' });
     S.manifest = await r.json();
   } catch (e) {
     $('#view').innerHTML = errorBox('manifest 를 불러오지 못했습니다. <br>ClubSchool-AI-OS/ 에서 <code>python3 Console/build-manifest.py</code> 실행 후, <code>python3 server/app.py</code> (권장) 또는 <code>python3 -m http.server</code> 로 서빙하고 <code>/Console/</code> 를 여세요.');
