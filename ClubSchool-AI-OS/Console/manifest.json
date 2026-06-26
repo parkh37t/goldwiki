@@ -1318,5 +1318,62 @@
       "title": "UIDesign — UI 디자인팀 역할 카탈로그",
       "path": "Agents/UIDesign.md"
     }
+  ],
+  "pipelineDemo": [
+    {
+      "num": "00",
+      "title": "00 · 자동 실행 종합 보고서(README) — 전국 청소년 동아리 통합 플랫폼 구축",
+      "path": "Examples/auto-run-demo/00_README.md"
+    },
+    {
+      "num": "01",
+      "title": "01 · RFP 심층 분석 보고서 — 전국 청소년 동아리 통합 플랫폼 구축",
+      "path": "Examples/auto-run-demo/01_RFP_Analysis.md"
+    },
+    {
+      "num": "02",
+      "title": "02 · 제안 전략 — 전국 청소년 동아리 통합 플랫폼 구축",
+      "path": "Examples/auto-run-demo/02_Proposal_Strategy.md"
+    },
+    {
+      "num": "03",
+      "title": "03 · 경영 요약 (Executive Summary) — 전국 청소년 동아리 통합 플랫폼 구축",
+      "path": "Examples/auto-run-demo/03_Executive_Summary.md"
+    },
+    {
+      "num": "04",
+      "title": "04 · 작업분해구조(WBS)·일정·자원 계획 — 전국 청소년 동아리 통합 플랫폼 구축",
+      "path": "Examples/auto-run-demo/04_WBS.md"
+    },
+    {
+      "num": "05",
+      "title": "05 · 정보구조(IA) · 핵심 유저플로우 · 화면목록 — 전국 청소년 동아리 통합 플랫폼",
+      "path": "Examples/auto-run-demo/05_IA_UserFlow_ScreenList.md"
+    },
+    {
+      "num": "06",
+      "title": "06 · UX 전략 · UI 컨셉 · 접근성(KWCAG 2.2 AA) — 전국 청소년 동아리 통합 플랫폼",
+      "path": "Examples/auto-run-demo/06_UX_UI_Concept.md"
+    },
+    {
+      "num": "07",
+      "title": "07 · 개발 실행계획(아키텍처·기술스택·API·데이터 이관·피크·보안) — 전국 청소년 동아리 통합 플랫폼",
+      "path": "Examples/auto-run-demo/07_Dev_Plan.md"
+    },
+    {
+      "num": "08",
+      "title": "08 · QA 계획서(테스트 전략·핵심 테스트케이스·성능/접근성/보안·종료기준) — 전국 청소년 동아리 통합 플랫폼",
+      "path": "Examples/auto-run-demo/08_QA_Plan.md"
+    },
+    {
+      "num": "09",
+      "title": "09 · AI 평가위원단 채점표 (Evaluation Scorecard) — 전국 청소년 동아리 통합 플랫폼 구축",
+      "path": "Examples/auto-run-demo/09_Evaluation_Scorecard.md"
+    },
+    {
+      "num": "10",
+      "title": "10 · 품질 검증 보고서(10단계 품질 게이트) — 전국 청소년 동아리 통합 플랫폼 구축",
+      "path": "Examples/auto-run-demo/10_QA_Verification.md"
+    }
   ]
 }

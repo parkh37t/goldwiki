@@ -183,7 +183,7 @@ function go(view) {
   S.view = view;
   $$('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.view === view));
   const V = $('#view');
-  ({ dashboard: viewDashboard, agents: viewAgents, commands: viewCommands, workflows: viewWorkflows,
+  ({ dashboard: viewDashboard, pipeline: viewPipeline, agents: viewAgents, commands: viewCommands, workflows: viewWorkflows,
      goldwiki: viewGoldwiki, templates: viewTemplates, examples: viewExamples, deliverables: viewDeliverables,
      qa: viewQA, settings: viewSettings }[view] || viewDashboard)(V);
 }
@@ -244,6 +244,93 @@ function viewDashboard(V) {
 function quickStart() {
   toast('설정에서 Anthropic API 키를 넣으면 브라우저에서 바로 대화할 수 있어요. 키 없이도 프롬프트 복사 모드로 사용 가능합니다.');
   go('settings');
+}
+
+/* ---------- 자동 파이프라인 (API 불필요) ---------- */
+const PL_PHASES = [
+  { key: '분석', nums: ['01'], desc: 'rfp-strategy-lead — 요구사항·평가기준·숨은기대·리스크' },
+  { key: '전략', nums: ['02', '03'], desc: 'proposal-lead — 윈테마·스토리라인·임원요약' },
+  { key: '설계', nums: ['04', '05', '06', '07', '08'], desc: 'PMO·IA·UI·개발·QA (병렬)' },
+  { key: '검증', nums: ['09', '10'], desc: '평가위원 채점 + QA 10단계 교차검증' },
+  { key: '종합', nums: ['00'], desc: 'executive-director — 종합 보고서' },
+];
+function viewPipeline(V) {
+  V.innerHTML = `<div class="page-head"><h1>자동 파이프라인</h1>
+    <p>RFP 1건 → 분석·전략·설계·검증·종합을 멀티에이전트가 자동 수행합니다. <b>API 키가 필요 없습니다.</b></p></div>
+    <div class="pl-tabs">
+      <button class="pl-tab active" data-pl="replay" type="button">📂 데모 리플레이</button>
+      <button class="pl-tab" data-pl="run" type="button">▶ 내 RFP로 실행</button>
+    </div>
+    <div id="pl-body"></div>`;
+  $$('.pl-tab').forEach(b => b.onclick = () => {
+    $$('.pl-tab').forEach(x => x.classList.toggle('active', x === b));
+    b.dataset.pl === 'run' ? plRun() : plReplay();
+  });
+  plReplay();
+}
+function plReplay() {
+  const demo = S.manifest.pipelineDemo || [];
+  const host = $('#pl-body');
+  if (!demo.length) { host.innerHTML = `<div class="dlv-empty">데모 산출물이 아직 없습니다. Claude Code에서 <code>/auto-rfp</code>를 실행하면 생성됩니다.</div>`; return; }
+  const byNum = Object.fromEntries(demo.map(d => [d.num, d]));
+  const score = byNum['09'], qa = byNum['10'];
+  host.innerHTML = `
+    <p style="color:var(--muted);margin:0 0 14px">실제 자동 실행 결과입니다(샘플 RFP: 전국 청소년 동아리 통합 플랫폼). 단계 카드를 눌러 산출물을 펼쳐 보세요 — 정적 문서라 API 호출이 전혀 없습니다.</p>
+    <div class="pl-result">
+      <div class="pl-rcard"><div class="pl-rn">87.65<span>/100</span></div><div class="pl-rl">평가위원 채점 (우수)</div></div>
+      <div class="pl-rcard"><div class="pl-rn">94%</div><div class="pl-rl">QA 10단계 통과 · 치명결함 0</div></div>
+      <div class="pl-rcard"><div class="pl-rn">11</div><div class="pl-rl">자동 생성 산출물</div></div>
+      <div class="pl-rcard"><div class="pl-rn">~60%</div><div class="pl-rl">예측 수주 확률</div></div>
+    </div>
+    <div class="pl-steps" id="pl-steps"></div>`;
+  const steps = $('#pl-steps');
+  PL_PHASES.forEach((ph, i) => {
+    const items = ph.nums.map(n => byNum[n]).filter(Boolean);
+    const el = document.createElement('div'); el.className = 'pl-step';
+    el.innerHTML = `<div class="pl-step-head"><span class="pl-badge">${i + 1}</span><div><div class="pl-step-title">${ph.key}</div><div class="pl-step-desc">${esc(ph.desc)}</div></div></div>
+      <div class="pl-arts">${items.map(it => `<button class="pl-art" data-path="${esc(it.path)}" type="button">📄 ${esc(it.title)}</button>`).join('')}</div>`;
+    steps.appendChild(el);
+  });
+  $$('#pl-steps .pl-art').forEach(b => b.onclick = () => openAnyDoc(b.dataset.path));
+}
+function plRun() {
+  const host = $('#pl-body');
+  host.innerHTML = `
+    <p style="color:var(--muted);margin:0 0 12px"><b>API 키 없이</b> 실행하는 방법입니다. 아래에 RFP를 붙여넣고 <b>실행 프롬프트 생성</b>을 누르면, Claude Code(구독·과금 아님)에 붙여넣어 자동 실행할 패키지를 만들어 드립니다.</p>
+    <textarea id="pl-rfp" rows="10" placeholder="여기에 RFP 전문 또는 사업 개요를 붙여넣으세요. (예: 발주기관·예산·기간·주요 요구사항·평가기준)" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:12px;font-family:inherit;font-size:13px"></textarea>
+    <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+      <button class="btn primary" id="pl-gen" type="button">실행 프롬프트 생성 & 복사</button>
+      <span style="color:var(--muted);font-size:12px">→ 복사 후 Claude Code 또는 claude.ai/code 에 붙여넣어 실행</span>
+    </div>
+    <div id="pl-out" style="margin-top:14px"></div>
+    <div class="pl-howto">
+      <b>왜 API가 필요 없나요?</b> 브라우저는 <u>오케스트레이션 프롬프트</u>만 만들고, 실제 생성·검증은 이미 구독 중인 <b>Claude Code</b>가 수행합니다(에이전트 24명·GoldWiki 표준 그대로). 토큰 과금이 발생하는 별도 API를 쓰지 않습니다.
+    </div>`;
+  $('#pl-gen').onclick = () => {
+    const rfp = $('#pl-rfp').value.trim();
+    if (!rfp) { toast('RFP 내용을 붙여넣으세요.'); return; }
+    const prompt = plBuildPrompt(rfp);
+    navigator.clipboard.writeText(prompt).catch(() => {});
+    $('#pl-out').innerHTML = `<div class="msg sys" style="max-width:100%"><div class="md">✅ 실행 프롬프트를 클립보드에 복사했습니다. <b>Claude Code</b>에 붙여넣어 실행하세요.</div></div>
+      <pre style="background:#0e1116;color:#e6edf3;padding:14px;border-radius:10px;overflow:auto;font-size:12px;white-space:pre-wrap">${esc(prompt)}</pre>`;
+  };
+}
+function plBuildPrompt(rfp) {
+  return `/auto-rfp
+
+아래 RFP로 ClubSchool AI OS 자율 파이프라인을 실행하라. GoldWiki를 단일 진실 공급원으로 삼아
+여러 전문 에이전트가 다음을 순차/병렬로 수행하고 산출물을 runs/<날짜-라벨>/ 에 저장한 뒤 교차 검증하라.
+
+1) 분석(rfp-strategy-lead): 요구사항 추출(REQ-###)·평가기준 대응·숨은 기대·리스크
+2) 전략(proposal-lead): 윈테마·스토리라인·임원 요약
+3) 설계(병렬): WBS(pmo) · IA/유저플로우/화면목록(ia) · UX·UI 컨셉(ui) · 개발계획(frontend+backend) · QA계획(qa)
+4) 검증(병렬): 평가위원 7축 채점(client-simulation-lead) · QA 10단계 품질 게이트(qa-lead)
+5) 종합(executive-director): 00_README 인덱스 + 경영 요약 + 다음 단계
+
+추적성(REQ↔SCR↔FLOW↔TC)을 유지하고, 모든 산출물은 한국어·경영진 수준·구현 가능·근거 기반으로 작성하라. 플레이스홀더 금지.
+
+[RFP]
+${rfp}`;
 }
 
 /* ---------- 에이전트 ---------- */

@@ -90,6 +90,14 @@ for p in sorted(glob.glob(os.path.join(ROOT, "Examples/*.md"))):
     t = read(p)
     manifest["examples"].append({"title": title_from(p, t), "path": rel(p)})
 
+# 자동 파이프라인 데모 산출물(Examples/auto-run-demo/*.md) — 콘솔 파이프라인 리플레이용
+manifest["pipelineDemo"] = []
+for p in sorted(glob.glob(os.path.join(ROOT, "Examples/auto-run-demo/*.md"))):
+    t = read(p)
+    base = os.path.basename(p)
+    num = base.split("_")[0]
+    manifest["pipelineDemo"].append({"num": num, "title": title_from(p, t), "path": rel(p)})
+
 # 팀 역할 카탈로그
 for p in sorted(glob.glob(os.path.join(ROOT, "Agents/*.md"))):
     t = read(p)
