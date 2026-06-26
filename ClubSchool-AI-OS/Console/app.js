@@ -366,10 +366,12 @@ async function plAutoRun(rfp) {
     }
   }
   if (results.length) {
-    const dl = document.createElement('div'); dl.style.cssText = 'margin-top:14px;display:flex;gap:8px;flex-wrap:wrap';
-    dl.innerHTML = `<button class="btn" id="pl-dl-md" type="button">📥 전체 .md 다운로드</button>`;
+    const combined = results.map(r => `# ${r.title}\n\n${r.content}`).join('\n\n---\n\n');
+    const dl = document.createElement('div'); dl.style.cssText = 'margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center';
+    const lbl = document.createElement('span'); lbl.textContent = '전체 산출물 내보내기:'; lbl.style.cssText = 'font-size:12.5px;color:var(--muted);font-weight:600';
+    dl.appendChild(lbl);
+    dl.appendChild(exportBar('자동RFP_산출물', combined));
     out.appendChild(dl);
-    $('#pl-dl-md').onclick = () => download('auto-rfp-result.md', results.map(r => `# ${r.title}\n\n${r.content}`).join('\n\n---\n\n'));
     toast('자동 실행 완료' + (loggedIn() ? ' · 산출물 저장됨' : ''));
   }
 }
@@ -490,6 +492,21 @@ async function openWikiDoc(path) {
   } catch (e) { host.innerHTML = errorBox('문서를 불러오지 못했습니다: ' + esc(e.message)); }
 }
 
+/* 내보내기 버튼 묶음 (PPTX/XLSX/DOCX/PDF/HTML/MD) — 어디서나 재사용 */
+function exportBar(title, getMd, only) {
+  const wrap = document.createElement('span'); wrap.className = 'exp-bar';
+  const fmts = only ? CSExport.FORMATS.filter(f => only.includes(f[1])) : CSExport.FORMATS;
+  fmts.forEach(([label, fn]) => {
+    const b = document.createElement('button'); b.className = 'exp-btn'; b.type = 'button'; b.textContent = label;
+    b.onclick = async () => {
+      try { const m = typeof getMd === 'function' ? getMd() : getMd; await CSExport[fn](title, m); toast(label + ' 내보내기 완료'); }
+      catch (e) { toast('내보내기 실패: ' + e.message); }
+    };
+    wrap.appendChild(b);
+  });
+  return wrap;
+}
+
 /* 렌더된 마크다운 내부의 .md 링크를 브라우저 이동(404) 대신 콘솔 안에서 열기 */
 function resolveRel(basePath, href) {
   href = (href || '').split('#')[0];
@@ -535,6 +552,7 @@ async function openAnyDoc(path, title) {
     $('#any-body').innerHTML = renderMd(t);
     const txt = t;
     $('#any-copy').onclick = () => { navigator.clipboard.writeText(txt); toast('원문을 복사했습니다.'); };
+    $('#any-copy').after(exportBar(title || path.split('/').pop().replace('.md', ''), txt));
   } catch (e) {
     $('#any-body').innerHTML = errorBox('이 문서는 콘솔에서 열 수 없습니다(비공개 경로이거나 정적 호스트에서 서빙되지 않음):<br><code>' + esc(path) + '</code>');
   }
@@ -910,12 +928,14 @@ function addBotActions(msgEl, reply, srcTitle) {
   bar.style.cssText = 'display:flex;gap:6px;margin-top:8px;flex-wrap:wrap';
   const mk = (label, fn) => { const b = document.createElement('button'); b.className = 'btn ghost'; b.style.cssText = 'font-size:11.5px;padding:5px 9px'; b.textContent = label; b.onclick = fn; return b; };
   bar.appendChild(mk('📋 복사', () => { navigator.clipboard.writeText(reply); toast('복사했습니다.'); }));
+  const title = (S.active && S.active.name ? S.active.name + ' — ' : '') + (srcTitle || '산출물').slice(0, 40);
   if (loggedIn()) {
-    const title = (S.active && S.active.name ? S.active.name + ' — ' : '') + (srcTitle || '산출물').slice(0, 40);
     bar.appendChild(mk('🗂️ 산출물로 저장', () => dbSaveDeliverable(title, reply)));
     bar.appendChild(mk('🧠 지식으로 학습', () => dbLearn(reply, S.active && S.active.name)));
   }
   msgEl.appendChild(bar);
+  const exp = exportBar(title, reply, ['pptx', 'doc', 'xlsx', 'pdf']);
+  exp.style.marginTop = '6px'; msgEl.appendChild(exp);
 }
 
 function buildSystemAndHistory(userText) {
