@@ -201,12 +201,12 @@ function chatMode() {
   // 'ollama'  : 로컬 Ollama (무료, 내 PC) — 사용자가 명시 선택
   // 'server'  : 백엔드 프록시 사용 (서버에 키 있음) — 'auto' 선택 시에만
   // 'direct'  : 브라우저에서 직접 Anthropic 호출 (콘솔 설정에 키 있음)
-  const e = S.settings.engine || 'prompt';   // 기본: 무API (사용자 요청)
+  const e = S.settings.engine || 'direct';   // 기본: 내 API 키(내 토큰)로 대화
   if (e === 'ollama') return (S.settings.ollamaUrl || '').trim() ? 'ollama' : 'prompt';
-  if (e === 'direct') return S.settings.apiKey ? 'direct' : 'prompt';
-  if (e === 'auto') {                          // 사용자가 명시적으로 'API 자동'을 선택했을 때만 과금 경로
-    if (S.backend && S.backend.hasKey) return 'server';
+  if (e === 'direct') return S.settings.apiKey ? 'direct' : 'prompt';   // 내 토큰
+  if (e === 'auto') {                          // 'API 자동' 선택 시: 내 키 우선, 없으면 서버 키
     if (S.settings.apiKey) return 'direct';
+    if (S.backend && S.backend.hasKey) return 'server';
   }
   return 'prompt';
 }
@@ -691,14 +691,26 @@ function viewSettings(V) {
   <div class="form">
     <label>응답 엔진 <span class="hint">에이전트 대화·자동 파이프라인을 무엇으로 구동할지</span></label>
     <select id="set-engine">
-      <option value="prompt" ${(s.engine || 'prompt') === 'prompt' ? 'selected' : ''}>🆓 무API · 프롬프트 복사 (기본 · 과금 전혀 없음)</option>
-      <option value="ollama" ${s.engine === 'ollama' ? 'selected' : ''}>🟢 로컬 Ollama (무료 · 내 PC · 모바일은 불가)</option>
-      <option value="auto" ${s.engine === 'auto' ? 'selected' : ''}>☁️ 서버/내 API 자동 (유료 · 사용량 한도 있음)</option>
+      <option value="direct" ${(s.engine || 'direct') === 'direct' ? 'selected' : ''}>🔑 내 Anthropic API 키 — 내 토큰으로 바로 대화 (권장)</option>
+      <option value="prompt" ${s.engine === 'prompt' ? 'selected' : ''}>🆓 무API · 프롬프트 복사 (과금 전혀 없음)</option>
+      <option value="ollama" ${s.engine === 'ollama' ? 'selected' : ''}>🟢 로컬 Ollama (무료 · 내 PC · 모바일 불가)</option>
+      <option value="auto" ${s.engine === 'auto' ? 'selected' : ''}>☁️ 서버 키 자동 (배포 서버에 설정된 키)</option>
     </select>
-    <div class="hint" style="margin-top:6px">기본은 <b>무API</b>입니다. "전송"을 누르면 완성된 실행 프롬프트가 복사되어, <a href="https://claude.ai" target="_blank">claude.ai</a> 등 무료 AI에 붙여넣어 바로 실행할 수 있습니다. API 과금이 전혀 없습니다.</div>
+    <div class="hint" style="margin-top:6px"><b>내 API 키</b>를 넣으면 브라우저에서 Claude를 직접 호출해 <b>내 토큰(크레딧)에서 소진</b>됩니다(서버 키 사용 안 함). 아래에 키를 입력하세요.</div>
 
-    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;margin:14px 0">
-      <label style="margin-top:0">로컬 Ollama 주소</label>
+    <div style="background:rgba(231,198,90,.08);border:1px solid rgba(231,198,90,.25);border-radius:10px;padding:14px;margin:14px 0">
+      <label style="margin-top:0">🔑 Anthropic API 키 <span class="hint">내 토큰으로 대화 · 이 브라우저에만 저장</span></label>
+      <input id="set-key" type="password" placeholder="sk-ant-..." value="${esc(s.apiKey || '')}" autocomplete="off" />
+      <div class="row" style="margin-top:8px">
+        <div><label>Claude 모델</label>
+          <select id="set-model">${['claude-opus-4-8', 'claude-sonnet-4-6', 'claude-haiku-4-5-20251001'].map(m => `<option ${s.model === m ? 'selected' : ''}>${m}</option>`).join('')}</select></div>
+        <div><label>최대 출력 토큰</label><input id="set-tokens" type="number" value="${s.maxTokens || 4096}" /></div>
+      </div>
+      <div class="hint" style="margin-top:8px">키 발급: <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com → API Keys</a> (<code>sk-ant-</code>로 시작). 저렴하게 쓰려면 모델을 <b>claude-haiku</b>로 선택하세요.</div>
+    </div>
+
+    <div style="background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.22);border-radius:10px;padding:14px;margin:14px 0">
+      <label style="margin-top:0">🟢 로컬 Ollama 주소 <span class="hint">PC에서 무료 실행 · 모바일 불가</span></label>
       <input id="set-ollama-url" placeholder="http://localhost:11434" value="${esc(s.ollamaUrl || 'http://localhost:11434')}" />
       <div class="row" style="margin-top:8px">
         <div style="flex:2"><label>모델</label><input id="set-ollama-model" placeholder="llama3.1 / qwen2.5 / gemma2" value="${esc(s.ollamaModel || '')}" /></div>
@@ -708,16 +720,6 @@ function viewSettings(V) {
       <div class="hint" style="margin-top:6px">설치: <code>ollama pull llama3.1</code> 후 실행. 브라우저 연결 위해 <code>OLLAMA_ORIGINS=*</code> 환경변수로 Ollama를 켜세요. 자세히: <a href="../Docs/OLLAMA.md">Docs/OLLAMA.md</a></div>
     </div>
 
-    <details>
-      <summary style="cursor:pointer;font-weight:600;font-size:13px;color:var(--muted);margin:6px 0">고급: Anthropic API 키 (선택)</summary>
-      <label>Anthropic API 키 <span class="hint">유료. 입력 시 브라우저에서 직접 Claude 호출</span></label>
-      <input id="set-key" type="password" placeholder="sk-ant-..." value="${esc(s.apiKey || '')}" />
-      <div class="row">
-        <div><label>Claude 모델</label>
-          <select id="set-model">${['claude-opus-4-8', 'claude-sonnet-4-6', 'claude-haiku-4-5-20251001'].map(m => `<option ${s.model === m ? 'selected' : ''}>${m}</option>`).join('')}</select></div>
-        <div><label>최대 출력 토큰</label><input id="set-tokens" type="number" value="${s.maxTokens || 4096}" /></div>
-      </div>
-    </details>
 
     <label>응답 언어</label>
     <select id="set-lang"><option ${s.lang !== 'en' ? 'selected' : ''} value="ko">한국어</option><option ${s.lang === 'en' ? 'selected' : ''} value="en">English</option></select>
