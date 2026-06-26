@@ -1,0 +1,5 @@
+.env
+__pycache__/
+*.pyc
+# 자동 파이프라인 실행 출력(로컬). 데모는 Examples/auto-run-demo/에 보관.
+runs/
