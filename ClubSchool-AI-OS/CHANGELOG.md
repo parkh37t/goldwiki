@@ -36,6 +36,27 @@
 
 ---
 
+## [1.5.0] — 2026-06-26 · 웹 콘솔 · 무API 자동화 · 디자인 산출물
+
+### Added (추가)
+- **웹 콘솔(`Console/`)** — 프리미엄 다크 UI. 에이전트 대화·커맨드·워크플로우·Gold Wiki 탐색·
+  내 산출물·10단계 품질 검증·🚀 자동 파이프라인. Vercel(서버리스 `api/*.py`) 배포.
+- **무API 실행(로컬 Ollama)** — 설정에서 엔진 전환, 브라우저에서 버튼 하나로 RFP 자동 실행.
+  `Docs/OLLAMA.md`. 채팅·파이프라인 공용 디스패처(`llmComplete`).
+- **품질 보완 루프** — 자동 실행 후 qa-lead 품질 게이트(JSON 채점) → 미흡 단계 자동 재작성(최대 2회) → 재검증.
+- **산출물 내보내기** — PPTX·XLSX·DOCX·PDF·**DESIGN(.html)**·HTML·MD (클라이언트, 무료). `export.js`.
+- **Supabase 연동** — 로그인(GoTrue)·작업/대화/산출물 영속화(PostgREST+RLS)·자동학습 RAG(pgvector,
+  `/api/embed`·`/api/rag`). `supabase/schema.sql`.
+- **Figma/클로드디자인 연결** — `.claude/commands/to-design.md`. 실제 시연: Figma 6화면 모바일 플로우
+  (프로토타입 연결 26개·시작점 지정) + Adobe Express 1페이지 임포트.
+- **Figma 디자인 시스템** — 컬러 변수 10·수치 변수 9·텍스트 스타일 7·컴포넌트 4, 6개 화면 색상
+  토큰 바인딩(채움 182·테두리 22).
+
+### Changed (변경)
+- `CLAUDE.md`/`README.md` ClubSchool AI OS 브랜딩, `vercel.json`·`Dockerfile`·`render.yaml` 배포 설정.
+
+---
+
 ## [1.0.0] — 2026-06-26
 
 ### Added (추가)
