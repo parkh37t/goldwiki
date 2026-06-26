@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>전국 청소년 동아리 통합 플랫폼 — 제안 경영 요약</title>
+<meta name="hz:slide-selector" content=".page" />
+<meta name="hz:canvas-width" content="794" />
+<meta name="hz:canvas-height" content="1123" />
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{display:flex;justify-content:center;align-items:flex-start;background:#0b0d11;min-height:100vh}
+.page{position:relative;width:794px;height:1123px;background:#0e1116;overflow:hidden;font-family:'Noto Sans KR',sans-serif;color:#e9ecf3}
+.bar{position:absolute;top:0;left:0;width:100%;height:8px;background:linear-gradient(90deg,#e7c65a,#9c7b16)}
+.kicker{position:absolute;top:52px;left:56px;font-size:13px;letter-spacing:6px;color:#e7c65a;font-weight:700}
+.title{position:absolute;top:78px;left:56px;width:682px;font-size:40px;font-weight:900;line-height:1.18;color:#ffffff}
+.sub{position:absolute;top:196px;left:56px;width:560px;font-size:14px;color:#9aa2b1;line-height:1.6}
+.org{position:absolute;top:56px;right:56px;text-align:right;font-size:12px;color:#9aa2b1;line-height:1.7}
+.org b{color:#e7c65a}
+.sec{position:absolute;left:56px;width:682px;font-size:13px;letter-spacing:3px;color:#8a93a6;font-weight:700;text-transform:uppercase}
+.win{position:absolute;left:56px;width:682px;display:flex;gap:14px}
+.wincard{flex:1;background:#161922;border:1px solid #262b36;border-radius:14px;padding:18px 16px}
+.wincard .n{font-size:12px;color:#e7c65a;font-weight:700}
+.wincard h3{font-size:15px;color:#fff;margin:8px 0 6px;font-weight:700}
+.wincard p{font-size:11.5px;color:#9aa2b1;line-height:1.55}
+.kpis{position:absolute;left:56px;width:682px;display:flex;gap:14px}
+.kpi{flex:1;background:linear-gradient(160deg,#1c2029,#13161d);border:1px solid #262b36;border-radius:14px;padding:18px;text-align:center}
+.kpi .v{font-size:30px;font-weight:900;color:#e7c65a}
+.kpi .l{font-size:11px;color:#9aa2b1;margin-top:4px}
+.timeline{position:absolute;left:56px;width:682px;display:flex;justify-content:space-between;border-top:1px solid #262b36;padding-top:16px}
+.ph{flex:1;text-align:center;position:relative}
+.ph::before{content:"";position:absolute;top:-21px;left:50%;transform:translateX(-50%);width:11px;height:11px;border-radius:50%;background:#e7c65a}
+.ph .m{font-size:12px;font-weight:700;color:#fff}
+.ph .d{font-size:10.5px;color:#8a93a6;margin-top:3px}
+.score{position:absolute;left:56px;width:682px;background:#161922;border:1px solid #262b36;border-radius:16px;padding:20px 24px;display:flex;align-items:center;gap:24px}
+.score .big{font-size:46px;font-weight:900;color:#e7c65a;line-height:1}
+.score .big span{font-size:18px;color:#9aa2b1}
+.score .lab{font-size:12px;color:#9aa2b1}
+.score .lab b{color:#fff;font-size:14px}
+.foot{position:absolute;bottom:30px;left:56px;width:682px;display:flex;justify-content:space-between;font-size:10.5px;color:#646d80;border-top:1px solid #262b36;padding-top:14px}
+</style>
+</head>
+<body>
+<div class="page" data-canvas-width="794" data-canvas-height="1123">
+  <div class="bar"></div>
+  <div class="kicker">PROPOSAL · EXECUTIVE SUMMARY</div>
+  <div class="org">발주 <b>한국청소년활동진흥원</b><br>사업기간 9개월 · 예산 12억<br>수행 ClubSchool AI OS</div>
+  <div class="title">전국 청소년 동아리<br>통합 플랫폼 구축 제안</div>
+  <div class="sub">흩어진 동아리 정보·모집·활동기록·지원금 신청을 하나의 모바일 우선 포털로 통합하여, 청소년 참여를 확대하고 운영기관의 행정 부담을 경감합니다.</div>
+
+  <div class="sec" style="top:262px">핵심 윈테마</div>
+  <div class="win" style="top:288px">
+    <div class="wincard"><div class="n">WIN 01</div><h3>모바일 우선 UX</h3><p>청소년 70% 모바일 접속을 전제로 한 직관적 가입·활동기록 경험과 KWCAG 2.2 AA 접근성.</p></div>
+    <div class="wincard"><div class="n">WIN 02</div><h3>안정적 데이터 이관</h3><p>회원 30만·동아리 1.2만 무중단 이관과 지원금 마감일 피크 대응 아키텍처.</p></div>
+    <div class="wincard"><div class="n">WIN 03</div><h3>행정 자동화</h3><p>지원금 신청·심사·정산 전자화와 운영기관 통합 대시보드로 업무량 40%↓.</p></div>
+  </div>
+
+  <div class="sec" style="top:452px">핵심 지표</div>
+  <div class="kpis" style="top:478px">
+    <div class="kpi"><div class="v">9개월</div><div class="l">정식 오픈(신학기 연동)</div></div>
+    <div class="kpi"><div class="v">30만+</div><div class="l">이관 대상 회원</div></div>
+    <div class="kpi"><div class="v">KWCAG</div><div class="l">2.2 AA 접근성 준수</div></div>
+    <div class="kpi"><div class="v">100%</div><div class="l">지원금 처리 전자화</div></div>
+  </div>
+
+  <div class="sec" style="top:600px">추진 일정</div>
+  <div class="timeline" style="top:644px">
+    <div class="ph"><div class="m">분석·설계</div><div class="d">M1–M2</div></div>
+    <div class="ph"><div class="m">UX·UI</div><div class="d">M2–M4</div></div>
+    <div class="ph"><div class="m">개발·이관</div><div class="d">M4–M7</div></div>
+    <div class="ph"><div class="m">QA·안정화</div><div class="d">M7–M8</div></div>
+    <div class="ph"><div class="m">오픈</div><div class="d">M9</div></div>
+  </div>
+
+  <div class="sec" style="top:730px">자체 평가</div>
+  <div class="score" style="top:756px">
+    <div class="big">87.65<span>/100</span></div>
+    <div class="lab"><b>심사위원 관점 7축 자체 채점 — '우수' 등급</b><br>사업이해 18.5 · 기술 26 · UX/UI 18 · 수행계획 13 · 데이터/운영 8.5 · 가격 3.15 · 예측 수주확률 ~60%</div>
+  </div>
+
+  <div class="foot"><span>ClubSchool AI OS · 자율 멀티에이전트 산출물</span><span>GoldWiki = Single Source of Truth</span></div>
+</div>
+</body>
+</html>

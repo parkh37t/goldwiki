@@ -337,42 +337,89 @@ const PL_STAGES = [
   { n: '06', t: 'QA·테스트', role: 'qa-lead', ask: '테스트 전략, 핵심 테스트케이스 표(TC-### · 시나리오 · 기대결과), 성능/접근성/보안, 종료 기준을 작성하라.' },
   { n: '07', t: '평가위원 채점', role: 'client-simulation-lead', ask: '심사위원 관점 7축 100점 채점표, 축별 강·약점, 보완책, 최종 수주확률(%)을 작성하라.' },
 ];
+function extractJson(text) {
+  if (!text) return null;
+  const m = text.match(/\{[\s\S]*\}/);
+  if (!m) return null;
+  try { return JSON.parse(m[0]); } catch { return null; }
+}
 async function plAutoRun(rfp) {
   const out = $('#pl-out');
-  out.innerHTML = `<div class="msg sys" style="max-width:100%"><div class="md">▶ ${esc({ ollama: '로컬 Ollama', server: '서버', direct: '내 API 키' }[chatMode()] || '엔진')}(으)로 자동 실행을 시작합니다. 단계별로 결과가 채워집니다…</div></div><div class="pl-runlist" id="pl-runlist"></div>`;
+  out.innerHTML = `<div class="msg sys" style="max-width:100%"><div class="md">▶ ${esc({ ollama: '로컬 Ollama', server: '서버', direct: '내 API 키' }[chatMode()] || '엔진')}(으)로 자동 실행을 시작합니다. 생성 → 품질 검증 → 미흡 시 자동 보완 순으로 진행됩니다…</div></div><div class="pl-runlist" id="pl-runlist"></div>`;
   const list = $('#pl-runlist');
-  S.active = { kind: 'pipeline', name: 'auto-rfp' };  // 산출물 저장용 컨텍스트
+  S.active = { kind: 'pipeline', name: 'auto-rfp' };
   let ctx = '';
-  const results = [];
-  for (const s of PL_STAGES) {
+  const results = []; const byN = {};
+
+  async function runStage(s, guidance) {
     const card = document.createElement('div'); card.className = 'pl-runitem';
-    card.innerHTML = `<div class="pl-run-h"><b>${s.n} · ${s.t}</b> <span class="pl-run-meta">${esc(s.role)}</span><span class="pl-run-st">⏳ 생성 중…</span></div><div class="md pl-run-body"></div>`;
+    card.innerHTML = `<div class="pl-run-h"><b>${s.n} · ${s.t}${guidance ? ' 🔧 보완' : ''}</b> <span class="pl-run-meta">${esc(s.role)}</span><span class="pl-run-st">⏳ 생성 중…</span></div><div class="md pl-run-body"></div>`;
     list.appendChild(card); card.scrollIntoView({ block: 'center', behavior: 'smooth' });
     const system = `너는 ClubSchool AI OS의 ${s.role} 에이전트다. GoldWiki 표준을 따르고 한국어로, 표·체크리스트를 적극 활용해 경영진 수준의 실무 산출물을 간결하지만 충실하게 작성한다. 플레이스홀더·군더더기 금지. 마크다운으로만 답한다.`;
-    const user = `[RFP]\n${rfp}\n\n${ctx ? '[이전 단계 핵심 요약]\n' + ctx + '\n\n' : ''}[작업] ${s.ask}`;
+    const user = `[RFP]\n${rfp}\n\n${ctx ? '[이전 단계 핵심 요약]\n' + ctx + '\n\n' : ''}${guidance ? '[품질 보완 지시 — 반드시 반영]\n' + guidance + '\n\n' : ''}[작업] ${s.ask}`;
+    const reply = await llmComplete(system, [{ role: 'user', content: user }]);
+    card.querySelector('.pl-run-body').innerHTML = renderMd(reply);
+    const st = card.querySelector('.pl-run-st'); st.textContent = guidance ? '🔧 보완 완료' : '✅ 완료'; st.className = 'pl-run-st ok';
+    return reply;
+  }
+
+  // 1) 단계별 생성
+  for (const s of PL_STAGES) {
     try {
-      const reply = await llmComplete(system, [{ role: 'user', content: user }]);
-      card.querySelector('.pl-run-body').innerHTML = renderMd(reply);
-      card.querySelector('.pl-run-st').textContent = '✅ 완료';
-      card.querySelector('.pl-run-st').className = 'pl-run-st ok';
-      ctx += `\n## ${s.n} ${s.t}\n` + reply.slice(0, 450);
-      results.push({ title: `${s.n} ${s.t}`, content: reply });
+      const reply = await runStage(s);
+      ctx += `\n## ${s.n} ${s.t}\n` + reply.slice(0, 420);
+      const r = { n: s.n, title: `${s.n} ${s.t}`, content: reply }; results.push(r); byN[s.n] = r;
       if (loggedIn()) dbSaveDeliverable(`[자동] ${s.n} ${s.t}`, reply);
     } catch (e) {
-      card.querySelector('.pl-run-st').textContent = '⚠️ 실패';
-      card.querySelector('.pl-run-st').className = 'pl-run-st err';
-      card.querySelector('.pl-run-body').innerHTML = renderMd(chatError(e.message));
-      break;
+      const c = list.lastChild; if (c) { const st = c.querySelector('.pl-run-st'); st.textContent = '⚠️ 실패'; st.className = 'pl-run-st err'; c.querySelector('.pl-run-body').innerHTML = renderMd(chatError(e.message)); }
+      return;
     }
   }
+
+  // 2) 품질 게이트 + 자동 보완 루프 (최대 2회 재작성)
+  const maxRev = 2; let revisions = 0;
+  for (let round = 0; round <= maxRev; round++) {
+    const qc = document.createElement('div'); qc.className = 'pl-runitem';
+    qc.innerHTML = `<div class="pl-run-h"><b>🔎 품질 게이트${round ? ` · ${round + 1}차` : ''}</b> <span class="pl-run-meta">qa-lead · 10단계 검증</span><span class="pl-run-st">⏳ 검증 중…</span></div><div class="md pl-run-body"></div>`;
+    list.appendChild(qc); qc.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    const qaSys = `너는 ClubSchool AI OS의 qa-lead다. GoldWiki 10단계 품질 검증 체계(RFP이해·요구누락·평가대응·UX/UI실현·기술구현·일정현실성·리스크·고객설득·임원적합·제출적합)로 아래 산출물을 평가한다. 반드시 JSON 객체 하나만 출력하라(코드펜스·설명 금지): {"score": 정수0-100, "pass": true|false, "weak":[{"n":"02","issue":"부족한 점 한 줄","fix":"구체적 보완 지시 한 줄"}]}. weak는 보완 필요한 단계만 최대 3개. score>=85 이고 치명결함 없으면 pass=true.`;
+    const qaUser = `[RFP]\n${rfp.slice(0, 1400)}\n\n[산출물 요약]\n` + results.map(r => `### ${r.title}\n${r.content.slice(0, 550)}`).join('\n\n');
+    let verdict;
+    try {
+      const qaReply = await llmComplete(qaSys, [{ role: 'user', content: qaUser }]);
+      verdict = extractJson(qaReply);
+    } catch (e) {
+      qc.querySelector('.pl-run-body').innerHTML = renderMd('검증 호출 실패 — 통과로 간주합니다.\n\n' + chatError(e.message));
+      qc.querySelector('.pl-run-st').textContent = '건너뜀'; break;
+    }
+    if (!verdict) { verdict = { pass: true, score: null, weak: [] }; }
+    const weak = (verdict.weak || []).filter(w => byN[w.n]);
+    qc.querySelector('.pl-run-body').innerHTML = renderMd(`**종합 점수: ${verdict.score ?? '-'} / 100 · 판정: ${verdict.pass ? '✅ 통과' : '⚠️ 보완 필요'}**\n\n` + (weak.length ? weak.map(w => `- **${w.n}** ${w.issue}\n  - 보완: ${w.fix}`).join('\n') : '미흡 항목 없음 — 품질 게이트 통과'));
+    qc.querySelector('.pl-run-st').textContent = '완료'; qc.querySelector('.pl-run-st').className = 'pl-run-st ok';
+
+    if (verdict.pass || !weak.length || revisions >= maxRev) break;
+    // 약한 단계 재작성(보완)
+    for (const w of weak) {
+      if (revisions >= maxRev) break;
+      const s = PL_STAGES.find(x => x.n === w.n); if (!s) continue;
+      revisions++;
+      try {
+        const reply = await runStage(s, `${w.issue} — ${w.fix}`);
+        byN[w.n].content = reply;
+        if (loggedIn()) dbSaveDeliverable(`[자동·보완] ${s.n} ${s.t}`, reply);
+      } catch (e) { /* 계속 진행 */ }
+    }
+    ctx = results.map(r => `## ${r.title}\n` + r.content.slice(0, 280)).join('\n');
+  }
+
+  // 3) 전체 내보내기
   if (results.length) {
     const combined = results.map(r => `# ${r.title}\n\n${r.content}`).join('\n\n---\n\n');
-    const dl = document.createElement('div'); dl.style.cssText = 'margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center';
+    const dl = document.createElement('div'); dl.style.cssText = 'margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center';
     const lbl = document.createElement('span'); lbl.textContent = '전체 산출물 내보내기:'; lbl.style.cssText = 'font-size:12.5px;color:var(--muted);font-weight:600';
-    dl.appendChild(lbl);
-    dl.appendChild(exportBar('자동RFP_산출물', combined));
+    dl.appendChild(lbl); dl.appendChild(exportBar('자동RFP_산출물', combined));
     out.appendChild(dl);
-    toast('자동 실행 완료' + (loggedIn() ? ' · 산출물 저장됨' : ''));
+    toast('자동 실행 완료' + (revisions ? ` · ${revisions}건 자동 보완` : '') + (loggedIn() ? ' · 저장됨' : ''));
   }
 }
 function plBuildPrompt(rfp) {
