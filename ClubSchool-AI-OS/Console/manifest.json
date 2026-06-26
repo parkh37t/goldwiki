@@ -1,0 +1,1235 @@
+{
+  "product": "ClubSchool AI OS",
+  "version": "1.0.0",
+  "generatedFrom": "ClubSchool-AI-OS",
+  "agents": [
+    {
+      "name": "accessibility-specialist",
+      "description": "WCAG 2.2 AA 준수, 접근성 감사, 개선 가이드, 포용적 디자인이 필요할 때 사용한다. 디자인·프로토타입·구현물이 장애 사용자에게 동등하게 접근 가능한지 검증하고 개선안을 제시할 때 호출한다.",
+      "tools": "",
+      "path": ".claude/agents/accessibility-specialist.md"
+    },
+    {
+      "name": "ai-automation-lead",
+      "description": "AI 자동화·멀티에이전트·RAG 설계와 구현이 필요할 때 사용한다. 프롬프트 설계, 검색증강생성(RAG) 파이프라인, 멀티에이전트 오케스트레이션, 도구 사용·평가·가드레일을 다룰 때 우선 선택된다. ClubSchool AI OS의 자동화 워크플로 자체를 개선할 때도 호출된다.",
+      "tools": "Read, Write, Edit, Grep, Glob",
+      "path": ".claude/agents/ai-automation-lead.md"
+    },
+    {
+      "name": "ai-engineer",
+      "description": "멀티에이전트 시스템 설계, 골드위키 기반 RAG 구축, 프롬프트 엔지니어링, AI 평가(eval)와 가드레일 적용이 필요할 때 사용한다. 에이전트 오케스트레이션·검색 증강·프롬프트 최적화 작업을 할 때 호출한다.",
+      "tools": "",
+      "path": ".claude/agents/ai-engineer.md"
+    },
+    {
+      "name": "api-engineer",
+      "description": "API 계약 설계, REST 표준 적용, OpenAPI 명세 작성, API 버저닝 전략 수립이 필요할 때 사용한다. 엔드포인트·스키마·에러 규약·하위 호환성을 정의할 때 호출한다.",
+      "tools": "",
+      "path": ".claude/agents/api-engineer.md"
+    },
+    {
+      "name": "backend-engineer",
+      "description": "서버 사이드 서비스 구현, 비즈니스 로직 작성, 외부 시스템 통합, 관측성(로깅·메트릭·트레이싱) 구축이 필요할 때 사용한다. 데이터 처리·트랜잭션·백엔드 성능 작업을 할 때 호출한다.",
+      "tools": "",
+      "path": ".claude/agents/backend-engineer.md"
+    },
+    {
+      "name": "backend-lead",
+      "description": "백엔드·API 설계와 구현이 필요할 때 사용한다. 도메인 모델·데이터베이스 스키마, REST/계약 설계, 인증·인가, 트랜잭션·일관성, 관측성·확장성을 갖춘 서버 구현을 다룰 때 우선 선택된다.",
+      "tools": "Read, Write, Edit, Grep, Glob",
+      "path": ".claude/agents/backend-lead.md"
+    },
+    {
+      "name": "business-analysis-lead",
+      "description": "비즈니스 요구사항을 분석하고 요구공학(requirements engineering)을 수행해야 할 때 사용한다. 이해관계자 니즈 도출, 요구사항 명세화, 범위 정의, As-Is/To-Be 분석, 요구 추적성 관리 시점에 자동 선택된다.",
+      "tools": "Read, Write, Edit, Grep, Glob",
+      "path": ".claude/agents/business-analysis-lead.md"
+    },
+    {
+      "name": "business-analyst",
+      "description": "요구공학, 이해관계자 분석, WBS 구성, 요구사항 추적성 관리, 인수기준 정의가 필요할 때 사용한다.",
+      "tools": "",
+      "path": ".claude/agents/business-analyst.md"
+    },
+    {
+      "name": "bx-design-lead",
+      "description": "브랜드 경험·브랜드 아이덴티티 설계가 필요할 때 사용한다. 브랜드 전략·핵심 가치·보이스앤톤·비주얼 아이덴티티(로고/컬러/타이포)·브랜드 적용 가이드를 정의하고, 제품 전반의 브랜드 일관성을 보장할 때 우선 선택된다.",
+      "tools": "Read, Write, Edit, Grep, Glob",
+      "path": ".claude/agents/bx-design-lead.md"
+    },
+    {
+      "name": "bx-designer",
+      "description": "브랜드 경험 설계, 비주얼 아이덴티티, 브랜드 톤·보이스, 터치포인트 전반의 감성·경험 일관성이 필요할 때 사용한다. 제품의 인상과 브랜드 표현을 정의하고 UI 디자인에 일관된 브랜드 언어를 적용할 때 호출한다.",
+      "tools": "",
+      "path": ".claude/agents/bx-designer.md"
+    },
+    {
+      "name": "ceo",
+      "description": "회사 전략 수립, 분기 우선순위 조정, OKR 소유, 부서 간 충돌 중재, 최종 승인·에스컬레이션이 필요할 때 사용한다.",
+      "tools": "",
+      "path": ".claude/agents/ceo.md"
+    },
+    {
+      "name": "client-simulation-lead",
+      "description": "고객·평가위원·경쟁사 관점 시뮬레이션이 필요할 때 사용한다. 제안서·산출물을 제출 전에 발주처 평가위원, 클라이언트 의사결정자, 경쟁사 입찰 관점에서 가상 심사·반론·비교해 약점과 차별화 포인트를 도출할 때 우선 선택된다.",
+      "tools": "Read, Write, Edit, Grep, Glob",
+      "path": ".claude/agents/client-simulation-lead.md"
+    },
+    {
+      "name": "coo-operator",
+      "description": "프로젝트 운영을 총괄하고 자원·우선순위를 배분하며 품질 게이트를 운영해야 할 때 사용한다. 어떤 에이전트를 언제 투입할지, 작업 순서·병렬화, 게이트 통과 여부를 조율할 때 자동 선택된다. executive-director의 전략 결정을 실행 가능한 운영 계획으로 전환한다.",
+      "tools": "Read, Write, Edit, Grep, Glob",
+      "path": ".claude/agents/coo-operator.md"
+    },
+    {
+      "name": "cto-reviewer",
+      "description": "기술 아키텍처 검토, 구현 가능성(feasibility) 판단, 기술 스택 선정, 기술 리스크 평가가 필요할 때 사용한다. 제안서의 기술 약속 검증, 설계안 리뷰, 프론트/백엔드/AI 구현 방향 결정 시점에 자동 선택된다.",
+      "tools": "Read, Write, Edit, Grep, Glob",
+      "path": ".claude/agents/cto-reviewer.md"
+    },
+    {
+      "name": "data-analytics-lead",
+      "description": "데이터 분석·지표 체계·계측이 필요할 때 사용한다. KPI/노스스타 정의, 이벤트 택소노미·계측 설계, 대시보드·코호트·퍼널 분석, 실험(A/B) 설계와 데이터 품질 거버넌스를 다룰 때 우선 선택된다.",
+      "tools": "Read, Write, Edit, Grep, Glob",
+      "path": ".claude/agents/data-analytics-lead.md"
+    },
+    {
+      "name": "database-architect",
+      "description": "데이터 모델링, 스키마 설계, 인덱싱 전략, 마이그레이션 계획, 쿼리·데이터베이스 성능 튜닝이 필요할 때 사용한다. 정규화·관계 설계·데이터 무결성 작업을 할 때 호출한다.",
+      "tools": "",
+      "path": ".claude/agents/database-architect.md"
+    },
+    {
+      "name": "design-system-lead",
+      "description": "디자인 시스템·디자인 토큰·컴포넌트 라이브러리의 정의·확장·거버넌스가 필요할 때 사용한다. 색/타이포/간격/모션 토큰 체계 설계, 컴포넌트 사양·상태·접근성 규격 정의, 토큰-코드 동기화 표준을 다룰 때 우선 선택된다.",
+      "tools": "Read, Write, Edit, Grep, Glob",
+      "path": ".claude/agents/design-system-lead.md"
+    },
+    {
+      "name": "devops-engineer",
+      "description": "CI/CD 파이프라인 구축, 환경 구성, 릴리스 관리, IaC(코드형 인프라), 모니터링·알림 설정이 필요할 때 사용한다. 배포 자동화·롤백·인프라 프로비저닝 작업을 할 때 호출한다.",
+      "tools": "",
+      "path": ".claude/agents/devops-engineer.md"
+    },
+    {
+      "name": "documentation-lead",
+      "description": "GoldWiki 무결성 유지와 SSOT 강제가 필요할 때 사용한다. 모든 의사결정 후 DecisionLog·ProjectMemory·BestPractices·ReferenceLibrary 갱신, 지식 중복·드리프트 탐지, 링크·구조 정합성 검수, 문서 표준 준수를 다룰 때 우선 선택된다. 작업 단위 종료 전 반드시 호출된다.",
+      "tools": "Read, Write, Edit, Grep, Glob",
+      "path": ".claude/agents/documentation-lead.md"
+    },
+    {
+      "name": "documentation-specialist",
+      "description": "골드위키 무결성 유지, 의사결정 로그·프로젝트 메모리·베스트 프랙티스·레퍼런스 라이브러리 갱신, 단일 진실 공급원(SSOT)·중복 금지 강제가 필요할 때 사용한다. 지식 정리·문서 동기화·거버넌스 점검 작업을 할 때 호출한다.",
+      "tools": "",
+      "path": ".claude/agents/documentation-specialist.md"
+    },
+    {
+      "name": "executive-director",
+      "description": "프로젝트 전체의 전략 방향 설정, 수주 여부(Go/No-Go) 판단, 최종 산출물 승인, 부서 간 충돌 조정, 그리고 모든 중대 에스컬레이션의 최종 의사결정이 필요할 때 사용한다. RFP 착수 직후 전략 승인, 제안 제출 직전 최종 검수, 분쟁 조정, 예외 승인 시점에 자동 선택된다.",
+      "tools": "Read, Write, Edit, Grep, Glob",
+      "path": ".claude/agents/executive-director.md"
+    },
+    {
+      "name": "frontend-engineer",
+      "description": "UI 코드 구현, 디자인 시스템 통합, 프런트엔드 성능 최적화, 빌드 산출물의 접근성 보장이 필요할 때 사용한다. 마크업·스타일·인터랙션 코드를 작성하거나 컴포넌트를 디자인 토큰에 연결할 때 호출한다.",
+      "tools": "",
+      "path": ".claude/agents/frontend-engineer.md"
+    },
+    {
+      "name": "frontend-lead",
+      "description": "프론트엔드 구현이 필요할 때 사용한다. 컴포넌트 아키텍처, 상태 관리, API 연동, 성능·접근성·테스트를 갖춘 프로덕션 프론트엔드 코드를 설계·구현하고, 퍼블리싱 프로토타입을 실제 애플리케이션으로 전환할 때 우선 선택된다.",
+      "tools": "Read, Write, Edit, Grep, Glob",
+      "path": ".claude/agents/frontend-lead.md"
+    },
+    {
+      "name": "industry-research-lead",
+      "description": "업종·시장·경쟁사·발주처 맥락을 리서치해야 할 때 사용한다. 업종 특성·규제·트렌드 조사, 시장 규모·경쟁 구도 분석, 발주처 배경 파악, 벤치마킹 시점에 자동 선택된다.",
+      "tools": "Read, Write, Edit, Grep, Glob",
+      "path": ".claude/agents/industry-research-lead.md"
+    },
+    {
+      "name": "information-architecture-lead",
+      "description": "정보구조(IA)와 내비게이션을 설계해야 할 때 사용한다. 콘텐츠 인벤토리, 분류체계(택소노미)·사이트맵, 내비게이션 모델, 레이블링, 카드소팅 검증 시점에 자동 선택된다.",
+      "tools": "Read, Write, Edit, Grep, Glob",
+      "path": ".claude/agents/information-architecture-lead.md"
+    },
+    {
+      "name": "interaction-designer",
+      "description": "인터랙션·모션 디자인, 마이크로인터랙션, 상태 전환, 동작 프로토타이핑, 유저플로우 정교화가 필요할 때 사용한다. 정적 화면에 동작과 피드백을 부여하고 흐름의 동적 사양을 정의할 때 호출한다.",
+      "tools": "",
+      "path": ".claude/agents/interaction-designer.md"
+    },
+    {
+      "name": "pmo-director",
+      "description": "WBS 작성, 일정 수립, 마일스톤 정의, 리스크 관리, 진행 추적이 필요할 때 사용한다. 프로젝트 착수 시 계획 수립, 일정 지연·리스크 발생 시 대응, 단계 전환 시 진척 점검 시점에 자동 선택된다.",
+      "tools": "Read, Write, Edit, Grep, Glob",
+      "path": ".claude/agents/pmo-director.md"
+    },
+    {
+      "name": "product-owner",
+      "description": "제품 백로그 관리, 우선순위 결정, 유저스토리 작성, 인수, 가치 전달 책임이 필요할 때 사용한다.",
+      "tools": "",
+      "path": ".claude/agents/product-owner.md"
+    },
+    {
+      "name": "product-strategy-lead",
+      "description": "프로덕트 전략과 백로그를 수립해야 할 때 사용한다. 비전·목표(OKR) 정의, 가치 제안, 우선순위(MoSCoW/RICE) 기반 백로그 구성, 로드맵 설계, MVP 범위 결정 시점에 자동 선택된다.",
+      "tools": "Read, Write, Edit, Grep, Glob",
+      "path": ".claude/agents/product-strategy-lead.md"
+    },
+    {
+      "name": "project-director",
+      "description": "전 과제의 납품을 총괄 계획·조율하고, 에이전트 리소싱·일정·리스크 관리와 단계별 게이트 승인이 필요할 때 사용한다.",
+      "tools": "",
+      "path": ".claude/agents/project-director.md"
+    },
+    {
+      "name": "proposal-lead",
+      "description": "제안서를 총괄 설계·집필해야 할 때 사용한다. 스토리라인 구성, 경영요약(Executive Summary) 작성, 섹션 배분, 일관된 메시지 통합, 제출 전 최종 정합성 검토 시점에 자동 선택된다.",
+      "tools": "Read, Write, Edit, Grep, Glob",
+      "path": ".claude/agents/proposal-lead.md"
+    },
+    {
+      "name": "proposal-strategist",
+      "description": "윈테마 도출, 제안 스토리라인 설계, 경영요약 작성, 컴플라이언스 매트릭스 구성, 레드팀 리뷰가 필요할 때 사용한다.",
+      "tools": "",
+      "path": ".claude/agents/proposal-strategist.md"
+    },
+    {
+      "name": "publishing-engineer",
+      "description": "디자인을 HTML 프로토타입으로 구축·퍼블리시할 때 사용한다. 시맨틱 마크업, 토큰 기반 CSS, 정적 프로토타입 배포가 필요하거나 확정 디자인을 클릭 가능한 프런트엔드 산출물로 변환할 때 호출한다.",
+      "tools": "",
+      "path": ".claude/agents/publishing-engineer.md"
+    },
+    {
+      "name": "publishing-lead",
+      "description": "디자인 시안을 동작하는 HTML 프로토타입으로 퍼블리싱할 때 사용한다. 시맨틱 마크업, 반응형 CSS, 접근성, 토큰 기반 스타일링으로 시안을 코드로 옮기고, 프론트엔드 인계 가능한 정적 프로토타입을 산출할 때 우선 선택된다.",
+      "tools": "Read, Write, Edit, Grep, Glob",
+      "path": ".claude/agents/publishing-lead.md"
+    },
+    {
+      "name": "qa-engineer",
+      "description": "테스트 전략 수립과 실행, 결함 관리, 품질 게이트 운영, 접근성(a11y)·성능 테스트가 필요할 때 사용한다. 테스트 케이스 설계·회귀 검증·출시 전 품질 판정 작업을 할 때 호출한다.",
+      "tools": "",
+      "path": ".claude/agents/qa-engineer.md"
+    },
+    {
+      "name": "qa-lead",
+      "description": "QA·테스트 전략과 품질 게이트 운영이 필요할 때 사용한다. 테스트 계획·자동화, 접근성·크로스브라우저·성능 검증, 회귀 방지, 릴리스 전 품질 게이트 통과 판정을 다룰 때 우선 선택된다.",
+      "tools": "Read, Write, Edit, Grep, Glob",
+      "path": ".claude/agents/qa-lead.md"
+    },
+    {
+      "name": "rfp-strategy-lead",
+      "description": "RFP/제안요청서를 분석하고 수주 전략을 수립해야 할 때 사용한다. 요구사항 추출, 평가 배점 해석, 경쟁 구도 분석, 수주 테마(Win Theme) 도출, Go/No-Go 권고 시점에 자동 선택된다.",
+      "tools": "Read, Write, Edit, Grep, Glob",
+      "path": ".claude/agents/rfp-strategy-lead.md"
+    },
+    {
+      "name": "sales-director",
+      "description": "영업 파이프라인 관리, RFP go/no-go 판단, 고객 관계 운영, 수주 전략 정렬이 필요할 때 사용한다.",
+      "tools": "",
+      "path": ".claude/agents/sales-director.md"
+    },
+    {
+      "name": "security-engineer",
+      "description": "방어적 보안 검토, OWASP 기반 통제 설계, 시큐어 SDLC 적용, 보안 감사 및 위협 모델링이 필요할 때 사용한다. 인증·인가·데이터 보호·취약점 점검 작업을 할 때 호출한다.",
+      "tools": "",
+      "path": ".claude/agents/security-engineer.md"
+    },
+    {
+      "name": "security-risk-lead",
+      "description": "방어적 보안·리스크 관리가 필요할 때 사용한다. 위협 모델링, 보안 요구·시큐어 코딩 검토, 인증·인가·데이터 보호, 취약점 점검(OWASP), 프라이버시·컴플라이언스, 리스크 등록·완화를 다룰 때 우선 선택된다. 공격이 아닌 방어·완화 목적에만 사용한다.",
+      "tools": "Read, Write, Edit, Grep, Glob",
+      "path": ".claude/agents/security-risk-lead.md"
+    },
+    {
+      "name": "service-planner",
+      "description": "서비스 디자인, 정보구조(IA) 전략, 사용자 여정·서비스 블루프린트 기획, 화면 목록 정의, 범위-경험 매핑이 필요할 때 사용한다.",
+      "tools": "",
+      "path": ".claude/agents/service-planner.md"
+    },
+    {
+      "name": "service-planning-lead",
+      "description": "서비스를 기획하고 화면 목록(IA 직전 수준)을 정의해야 할 때 사용한다. 서비스 정책·기능 정의, 화면 목록(스크린 리스트)·플로우, 기능명세, 정책서 작성 시점에 자동 선택된다.",
+      "tools": "Read, Write, Edit, Grep, Glob",
+      "path": ".claude/agents/service-planning-lead.md"
+    },
+    {
+      "name": "ui-design-lead",
+      "description": "비주얼 UI 디자인과 화면 설계가 필요할 때 사용한다. 와이어프레임·IA를 시각적 화면으로 번역하고, 디자인 시스템·토큰에 정합하는 고품질 UI 시안과 개발 핸드오프 사양을 산출할 때 호출한다. 화면 상태(기본/호버/포커스/비활성/로딩/빈/오류)와 반응형 레이아웃 정의가 핵심일 때 우선 선택된다.",
+      "tools": "Read, Write, Edit, Grep, Glob",
+      "path": ".claude/agents/ui-design-lead.md"
+    },
+    {
+      "name": "ui-designer",
+      "description": "비주얼/UI 디자인, UI 가이드·디자인 시스템 적용, UI 컨셉과 화면 디자인 산출이 필요할 때 사용한다. 와이어프레임을 시각적 UI로 구체화하고 디자인 토큰·컴포넌트 라이브러리에 정합하는 화면을 만들 때 호출한다.",
+      "tools": "",
+      "path": ".claude/agents/ui-designer.md"
+    },
+    {
+      "name": "ux-research-lead",
+      "description": "사용자 리서치와 여정(Journey) 분석이 필요할 때 사용한다. 사용자 인터뷰 설계, 페르소나·여정맵 작성, 페인포인트·기회 도출, 사용성 평가, UX 전략 수립 시점에 자동 선택된다.",
+      "tools": "Read, Write, Edit, Grep, Glob",
+      "path": ".claude/agents/ux-research-lead.md"
+    },
+    {
+      "name": "ux-researcher",
+      "description": "사용자 리서치, 페르소나, 여정맵, 사용성 테스트, 디자인 의사결정 근거가 필요할 때 사용한다. 정성·정량 데이터로 사용자 문제를 정의하고 디자인의 출발점을 제공할 때 호출한다.",
+      "tools": "",
+      "path": ".claude/agents/ux-researcher.md"
+    }
+  ],
+  "commands": [
+    {
+      "name": "/analyze-rfp",
+      "description": "RFP 파일을 받아 21단계 파이프라인의 1~9단계(읽기~글로벌 벤치마크)를 수행해 분석 패키지를 산출한다.",
+      "argumentHint": "[RFP 파일 경로]",
+      "path": ".claude/commands/analyze-rfp.md"
+    },
+    {
+      "name": "/backend-plan",
+      "description": "기능 요건과 데이터 모델을 기반으로 백엔드 아키텍처·API·데이터베이스 구현 계획을 수립한다.",
+      "argumentHint": "[IA/요구 산출물 경로 또는 프로젝트명]",
+      "path": ".claude/commands/backend-plan.md"
+    },
+    {
+      "name": "/client-qna",
+      "description": "발주처/고객 관점의 예상 질의를 시뮬레이션하고 설득력 있는 답변 스크립트를 생성한다.",
+      "argumentHint": "[제안서/산출물 경로 또는 사업명]",
+      "path": ".claude/commands/client-qna.md"
+    },
+    {
+      "name": "/competitor-simulation",
+      "description": "예상 경쟁사의 제안 전략을 시뮬레이션하고 우리의 차별화·방어 전략을 도출한다.",
+      "argumentHint": "[RFP/제안 산출물 경로 또는 사업명]",
+      "path": ".claude/commands/competitor-simulation.md"
+    },
+    {
+      "name": "/design-start",
+      "description": "화면 요건과 브랜드를 기반으로 UI 디자인 방향(아트디렉션)과 핵심 화면 시안을 착수한다.",
+      "argumentHint": "[화면 목록 산출물 경로 또는 프로젝트명]",
+      "path": ".claude/commands/design-start.md"
+    },
+    {
+      "name": "/design-system-create",
+      "description": "디자인 시안을 토큰·컴포넌트·문서로 구조화한 재사용 가능한 디자인 시스템을 구축한다.",
+      "argumentHint": "[디자인 착수 산출물 경로 또는 프로젝트명]",
+      "path": ".claude/commands/design-system-create.md"
+    },
+    {
+      "name": "/design-system-init",
+      "description": "디자인 토큰·컴포넌트·UI 컨셉을 초기화해 디자인 시스템 기반을 구축한다.",
+      "argumentHint": "[UX 산출물 경로 또는 사업명]",
+      "path": ".claude/commands/design-system-init.md"
+    },
+    {
+      "name": "/executive-report",
+      "description": "프로젝트/제안 산출물을 경영진 의사결정용 1~2페이지 임원 보고서로 요약한다.",
+      "argumentHint": "[요약 대상 산출물 경로 또는 프로젝트명]",
+      "path": ".claude/commands/executive-report.md"
+    },
+    {
+      "name": "/final-review",
+      "description": "납품 직전 전체 산출물을 최종 검수 체크리스트로 점검하고 납품 승인 여부를 판정한다.",
+      "argumentHint": "[납품 패키지 경로 또는 프로젝트명]",
+      "path": ".claude/commands/final-review.md"
+    },
+    {
+      "name": "/frontend-plan",
+      "description": "퍼블리싱 산출물과 화면 요건을 기반으로 프론트엔드 아키텍처와 구현 계획을 수립한다.",
+      "argumentHint": "[퍼블리싱 산출물 경로 또는 프로젝트명]",
+      "path": ".claude/commands/frontend-plan.md"
+    },
+    {
+      "name": "/generate-proposal",
+      "description": "RFP 분석 결과로 제안 전략·스토리라인·경영 요약·컴플라이언스 매트릭스를 생성한다.",
+      "argumentHint": "[RFP 분석 패키지 경로 또는 사업명]",
+      "path": ".claude/commands/generate-proposal.md"
+    },
+    {
+      "name": "/goldwiki-sync",
+      "description": "골드위키 무결성(SSOT·중복 금지·링크 정합성)을 점검하고 동기화한다.",
+      "argumentHint": "[점검 범위(전체/문서번호/디렉터리) 선택]",
+      "path": ".claude/commands/goldwiki-sync.md"
+    },
+    {
+      "name": "/ia-create",
+      "description": "UX 전략을 기반으로 정보구조(IA)·내비게이션·콘텐츠 모델을 설계한다.",
+      "argumentHint": "[UX 착수 패키지 경로 또는 프로젝트명]",
+      "path": ".claude/commands/ia-create.md"
+    },
+    {
+      "name": "/new-decision",
+      "description": "새 의사결정을 ADR로 기록하고 의사결정 로그·프로젝트 메모리·베스트 프랙티스·레퍼런스 라이브러리를 갱신한다.",
+      "argumentHint": "[결정 제목 또는 결정 요약]",
+      "path": ".claude/commands/new-decision.md"
+    },
+    {
+      "name": "/plan-ux",
+      "description": "정보구조(IA)·유저 플로우·화면 목록·UX 전략을 산출한다.",
+      "argumentHint": "[제안/요구 산출물 경로 또는 사업명]",
+      "path": ".claude/commands/plan-ux.md"
+    },
+    {
+      "name": "/proposal-build",
+      "description": "RFP 심층 분석을 바탕으로 평가 배점에 정렬된 제안서 초안을 섹션별로 집필한다.",
+      "argumentHint": "[RFP 심층 분석 경로 또는 사업명]",
+      "path": ".claude/commands/proposal-build.md"
+    },
+    {
+      "name": "/proposal-review",
+      "description": "발주처 평가위원 관점으로 제안서를 채점·평가하고 개선 우선순위를 제시한다.",
+      "argumentHint": "[제안서 초안 경로 또는 사업명]",
+      "path": ".claude/commands/proposal-review.md"
+    },
+    {
+      "name": "/publish-prototype",
+      "description": "디자인 토큰 기반의 시맨틱 HTML 프로토타입을 생성·퍼블리시한다.",
+      "argumentHint": "[디자인 시스템/화면 목록 경로 또는 화면ID]",
+      "path": ".claude/commands/publish-prototype.md"
+    },
+    {
+      "name": "/publish-start",
+      "description": "디자인 시스템과 화면 시안을 접근성·반응형을 준수하는 시맨틱 마크업 프로토타입으로 퍼블리싱한다.",
+      "argumentHint": "[디자인 시스템 산출물 경로 또는 프로젝트명]",
+      "path": ".claude/commands/publish-start.md"
+    },
+    {
+      "name": "/qa-gate",
+      "description": "지정한 산출물에 대해 품질 체크리스트와 테스트 전략 게이트를 실행한다.",
+      "argumentHint": "[검수 대상 산출물 경로 또는 단계명]",
+      "path": ".claude/commands/qa-gate.md"
+    },
+    {
+      "name": "/qa-review",
+      "description": "산출물·구현물을 품질 기준·테스트 전략 기준으로 검수하고 결함과 개선안을 리포트한다.",
+      "argumentHint": "[검수 대상 경로 또는 프로젝트명]",
+      "path": ".claude/commands/qa-review.md"
+    },
+    {
+      "name": "/rfp-analyze",
+      "description": "RFP 요구사항을 심층 분석해 추적성 매트릭스·평가 매핑·숨은 기대·리스크를 정밀화한다.",
+      "argumentHint": "[RFP 분석 패키지 경로 또는 사업명]",
+      "path": ".claude/commands/rfp-analyze.md"
+    },
+    {
+      "name": "/rfp-start",
+      "description": "RFP 대응을 착수해 사업 개요 요약부터 임원 보고용 요약까지 10단계 분석 패키지를 산출한다.",
+      "argumentHint": "[RFP 파일 경로 또는 사업명]",
+      "path": ".claude/commands/rfp-start.md"
+    },
+    {
+      "name": "/risk-review",
+      "description": "프로젝트의 기술·보안·일정·규정 리스크를 식별·평가하고 완화 전략과 대응 계획을 수립한다.",
+      "argumentHint": "[프로젝트명 또는 대상 산출물 경로]",
+      "path": ".claude/commands/risk-review.md"
+    },
+    {
+      "name": "/run-pipeline",
+      "description": "RFP 수령부터 클라이언트 납품까지 21단계 파이프라인 전체를 오케스트레이션한다.",
+      "argumentHint": "[RFP 파일 경로]",
+      "path": ".claude/commands/run-pipeline.md"
+    },
+    {
+      "name": "/screenlist-create",
+      "description": "유저플로우를 기반으로 화면 목록(스크린 리스트)과 화면별 요건 정의서를 작성한다.",
+      "argumentHint": "[유저플로우 산출물 경로 또는 프로젝트명]",
+      "path": ".claude/commands/screenlist-create.md"
+    },
+    {
+      "name": "/security-review",
+      "description": "OWASP 기반의 방어적 보안 검토를 수행해 취약점·완화책·게이트 결과를 산출한다.",
+      "argumentHint": "[검토 대상 산출물/코드 경로 또는 기능명]",
+      "path": ".claude/commands/security-review.md"
+    },
+    {
+      "name": "/userflow-create",
+      "description": "IA를 기반으로 핵심 과업의 사용자 플로우와 상태 전이를 설계한다.",
+      "argumentHint": "[IA 산출물 경로 또는 프로젝트명]",
+      "path": ".claude/commands/userflow-create.md"
+    },
+    {
+      "name": "/ux-start",
+      "description": "사업 목표와 사용자 정의를 기반으로 UX 리서치·전략 착수 패키지를 산출한다.",
+      "argumentHint": "[프로젝트명 또는 요구 정의 경로]",
+      "path": ".claude/commands/ux-start.md"
+    },
+    {
+      "name": "/wbs-create",
+      "description": "프로젝트 범위를 작업분해구조(WBS)·일정·RACI·마일스톤으로 구조화한다.",
+      "argumentHint": "[범위 산출물 경로 또는 프로젝트명]",
+      "path": ".claude/commands/wbs-create.md"
+    }
+  ],
+  "workflows": [
+    {
+      "title": "워크플로우: RFP 분석 → 제안서 완성 (RFP to Proposal)",
+      "path": "Workflows/01_RFP_to_Proposal.md"
+    },
+    {
+      "title": "워크플로우: RFP → UX 전략·IA·유저플로우·화면목록 (RFP to UX)",
+      "path": "Workflows/02_RFP_to_UX.md"
+    },
+    {
+      "title": "워크플로우: UX → UI 컨셉·디자인 (UX to UI)",
+      "path": "Workflows/03_UX_to_UI.md"
+    },
+    {
+      "title": "워크플로우: UI → HTML 퍼블리싱·프로토타입 (UI to Publishing)",
+      "path": "Workflows/04_UI_to_Publishing.md"
+    },
+    {
+      "title": "워크플로우: 제안 → 임원 보고서 (Proposal to Executive Report)",
+      "path": "Workflows/05_Proposal_to_ExecutiveReport.md"
+    },
+    {
+      "title": "워크플로우: 프로젝트 품질 검증 (Project Quality Review · 10단계 체계)",
+      "path": "Workflows/06_Project_QualityReview.md"
+    },
+    {
+      "title": "워크플로우: 고객 시뮬레이션 (Client Simulation)",
+      "path": "Workflows/07_Client_Simulation.md"
+    },
+    {
+      "title": "워크플로우: 경쟁사 시뮬레이션 (Competitor Simulation)",
+      "path": "Workflows/08_Competitor_Simulation.md"
+    },
+    {
+      "title": "워크플로우: PMO 리스크 관리 (PMO Risk Management)",
+      "path": "Workflows/09_PMO_RiskManagement.md"
+    },
+    {
+      "title": "워크플로우: 최종 납품 (Final Delivery)",
+      "path": "Workflows/10_Final_Delivery.md"
+    },
+    {
+      "title": "디자인 스프린트 런북",
+      "path": "Workflows/Design_Runbook.md"
+    },
+    {
+      "title": "제안 스프린트 런북",
+      "path": "Workflows/Proposal_Runbook.md"
+    },
+    {
+      "title": "Workflows — 워크플로우 런북 인덱스",
+      "path": "Workflows/README.md"
+    },
+    {
+      "title": "RFP → 납품 런북 (21단계 전체 파이프라인)",
+      "path": "Workflows/RFP_to_Delivery_Runbook.md"
+    }
+  ],
+  "templates": [
+    {
+      "title": "백엔드 계획 템플릿 (Backend Plan Template)",
+      "path": "Templates/Backend_Plan_Template.md"
+    },
+    {
+      "title": "클라이언트 예상 질의응답 템플릿 (Client Q&A Template)",
+      "path": "Templates/Client_QA_Template.md"
+    },
+    {
+      "title": "디자인 시스템 템플릿 (Design System Template)",
+      "path": "Templates/DesignSystem_Template.md"
+    },
+    {
+      "title": "경영 요약 템플릿 (Executive Summary)",
+      "path": "Templates/Executive_Summary.md"
+    },
+    {
+      "title": "경영 요약 템플릿 (Executive Summary Template)",
+      "path": "Templates/Executive_Summary_Template.md"
+    },
+    {
+      "title": "최종 결과 보고서 템플릿 (Final Report Template)",
+      "path": "Templates/Final_Report_Template.md"
+    },
+    {
+      "title": "프론트엔드 계획 템플릿 (Frontend Plan Template)",
+      "path": "Templates/Frontend_Plan_Template.md"
+    },
+    {
+      "title": "정보구조·사이트맵 템플릿 (IA / Sitemap)",
+      "path": "Templates/IA_Sitemap.md"
+    },
+    {
+      "title": "정보구조 템플릿 (Information Architecture Template)",
+      "path": "Templates/IA_Template.md"
+    },
+    {
+      "title": "회의록 템플릿 (Meeting Note)",
+      "path": "Templates/Meeting_Note.md"
+    },
+    {
+      "title": "제안서 템플릿 (Proposal)",
+      "path": "Templates/Proposal.md"
+    },
+    {
+      "title": "제안 전략 템플릿 (Proposal Strategy Template)",
+      "path": "Templates/Proposal_Strategy_Template.md"
+    },
+    {
+      "title": "퍼블리싱 계획 템플릿 (Publishing Plan Template)",
+      "path": "Templates/Publishing_Plan_Template.md"
+    },
+    {
+      "title": "QA 체크리스트 템플릿 (QA Checklist Template)",
+      "path": "Templates/QA_Checklist_Template.md"
+    },
+    {
+      "title": "Templates — 산출물 템플릿 라이브러리",
+      "path": "Templates/README.md"
+    },
+    {
+      "title": "RFP 분석 보고서 템플릿 (RFP Analysis Report)",
+      "path": "Templates/RFP_Analysis_Report.md"
+    },
+    {
+      "title": "RFP 분석 템플릿 (RFP Analysis Template)",
+      "path": "Templates/RFP_Analysis_Template.md"
+    },
+    {
+      "title": "릴리스 노트 템플릿 (Release Notes)",
+      "path": "Templates/Release_Notes.md"
+    },
+    {
+      "title": "리스크 관리대장 템플릿 (Risk Register Template)",
+      "path": "Templates/Risk_Register_Template.md"
+    },
+    {
+      "title": "화면 목록 템플릿 (Screen List Template)",
+      "path": "Templates/ScreenList_Template.md"
+    },
+    {
+      "title": "화면 목록 템플릿 (Screen List)",
+      "path": "Templates/Screen_List.md"
+    },
+    {
+      "title": "테스트 계획 템플릿 (Test Plan)",
+      "path": "Templates/Test_Plan.md"
+    },
+    {
+      "title": "UI 컨셉 브리프 템플릿 (UI Concept Brief)",
+      "path": "Templates/UI_Concept_Brief.md"
+    },
+    {
+      "title": "UI 컨셉 템플릿 (UI Concept Template)",
+      "path": "Templates/UI_Concept_Template.md"
+    },
+    {
+      "title": "UX 전략 템플릿 (UX Strategy)",
+      "path": "Templates/UX_Strategy.md"
+    },
+    {
+      "title": "UX 전략 템플릿 (UX Strategy Template)",
+      "path": "Templates/UX_Strategy_Template.md"
+    },
+    {
+      "title": "유저 플로우 템플릿 (User Flow Template)",
+      "path": "Templates/UserFlow_Template.md"
+    },
+    {
+      "title": "유저 플로우 템플릿 (User Flow)",
+      "path": "Templates/User_Flow.md"
+    },
+    {
+      "title": "작업 분해 구조 템플릿 (WBS)",
+      "path": "Templates/WBS.md"
+    },
+    {
+      "title": "작업 분해 구조 템플릿 (WBS Template)",
+      "path": "Templates/WBS_Template.md"
+    }
+  ],
+  "examples": [
+    {
+      "title": "01 · RFP 심층 분석 보고서 — 전국 청소년 동아리 통합 플랫폼",
+      "path": "Examples/01_RFP_Analysis.md"
+    },
+    {
+      "title": "02 · 제안 경영 요약 (Executive Summary)",
+      "path": "Examples/02_Proposal_Executive_Summary.md"
+    },
+    {
+      "title": "03 · 작업분해구조(WBS) 및 일정",
+      "path": "Examples/03_WBS.md"
+    },
+    {
+      "title": "04 · 정보구조(IA) 및 핵심 유저 플로우",
+      "path": "Examples/04_IA_and_User_Flow.md"
+    },
+    {
+      "title": "05 · 화면 목록(화면 정의서)",
+      "path": "Examples/05_Screen_List.md"
+    },
+    {
+      "title": "06 · UI 컨셉 및 디자인 시스템(토큰 발췌)",
+      "path": "Examples/06_Design_Concept.md"
+    },
+    {
+      "title": "07 · HTML 프로토타입 계획",
+      "path": "Examples/07_Prototype_Plan.md"
+    },
+    {
+      "title": "08 · QA / 테스트 계획",
+      "path": "Examples/08_QA_Plan.md"
+    },
+    {
+      "title": "Examples — 워크스루 예시: 전국 청소년 동아리 통합 플랫폼",
+      "path": "Examples/README.md"
+    }
+  ],
+  "goldwiki": {
+    "numbered": [
+      {
+        "title": "00 · 여기서 시작하세요 (통합 마스터 인덱스 & 운영 매뉴얼)",
+        "path": "GoldWiki/00_START_HERE.md"
+      },
+      {
+        "title": "01 · 회사 컨텍스트 (Goldwiki Digital 회사 소개)",
+        "path": "GoldWiki/01_COMPANY_CONTEXT.md"
+      },
+      {
+        "title": "02 · 비즈니스 목표 (전략 · 운영 목표)",
+        "path": "GoldWiki/02_BUSINESS_GOALS.md"
+      },
+      {
+        "title": "03 · RFP 대응 프레임워크",
+        "path": "GoldWiki/03_RFP_FRAMEWORK.md"
+      },
+      {
+        "title": "04 · RFP 심층 분석 (플레이북)",
+        "path": "GoldWiki/04_RFP_ANALYSIS.md"
+      },
+      {
+        "title": "05 · 제안 전략 (수주 전략)",
+        "path": "GoldWiki/05_PROPOSAL_STRATEGY.md"
+      },
+      {
+        "title": "06 · 비즈니스 분석 (BA 방법론)",
+        "path": "GoldWiki/06_BUSINESS_ANALYSIS.md"
+      },
+      {
+        "title": "07 · UX 원칙 · 휴리스틱",
+        "path": "GoldWiki/07_UX_PRINCIPLES.md"
+      },
+      {
+        "title": "08 · UI 가이드라인",
+        "path": "GoldWiki/08_UI_GUIDELINES.md"
+      },
+      {
+        "title": "09 · 디자인 시스템",
+        "path": "GoldWiki/09_DESIGN_SYSTEM.md"
+      },
+      {
+        "title": "10 · Figma 작업 가이드",
+        "path": "GoldWiki/10_FIGMA_GUIDE.md"
+      },
+      {
+        "title": "11 · 정보구조(IA)",
+        "path": "GoldWiki/11_INFORMATION_ARCHITECTURE.md"
+      },
+      {
+        "title": "12 · 유저 플로우",
+        "path": "GoldWiki/12_USER_FLOW.md"
+      },
+      {
+        "title": "13 · 유저 여정 지도",
+        "path": "GoldWiki/13_USER_JOURNEY.md"
+      },
+      {
+        "title": "14 · 컴포넌트 라이브러리",
+        "path": "GoldWiki/14_COMPONENT_LIBRARY.md"
+      },
+      {
+        "title": "15 · 디자인 토큰",
+        "path": "GoldWiki/15_DESIGN_TOKEN.md"
+      },
+      {
+        "title": "16 · 접근성",
+        "path": "GoldWiki/16_ACCESSIBILITY.md"
+      },
+      {
+        "title": "17 · HTML 표준 가이드",
+        "path": "GoldWiki/17_HTML_GUIDE.md"
+      },
+      {
+        "title": "18 · CSS 아키텍처 가이드",
+        "path": "GoldWiki/18_CSS_GUIDE.md"
+      },
+      {
+        "title": "19 · JavaScript / TypeScript 표준 가이드",
+        "path": "GoldWiki/19_JS_GUIDE.md"
+      },
+      {
+        "title": "20 · 프론트엔드 엔지니어링 가이드",
+        "path": "GoldWiki/20_FRONTEND_GUIDE.md"
+      },
+      {
+        "title": "21 · 백엔드 엔지니어링 가이드",
+        "path": "GoldWiki/21_BACKEND_GUIDE.md"
+      },
+      {
+        "title": "22 · API 표준",
+        "path": "GoldWiki/22_API_STANDARD.md"
+      },
+      {
+        "title": "23 · 데이터베이스 가이드",
+        "path": "GoldWiki/23_DATABASE_GUIDE.md"
+      },
+      {
+        "title": "24 · 보안 가이드",
+        "path": "GoldWiki/24_SECURITY_GUIDE.md"
+      },
+      {
+        "title": "25 · 워크스페이스 AI 엔지니어링 가이드",
+        "path": "GoldWiki/25_AI_GUIDE.md"
+      },
+      {
+        "title": "26 · 프롬프트 엔지니어링 표준",
+        "path": "GoldWiki/26_PROMPT_ENGINEERING.md"
+      },
+      {
+        "title": "27 · 자율 RFP→납품 자동화 파이프라인",
+        "path": "GoldWiki/27_AUTOMATION_WORKFLOW.md"
+      },
+      {
+        "title": "28 · 서브에이전트 공통 규칙",
+        "path": "GoldWiki/28_SUBAGENT_RULES.md"
+      },
+      {
+        "title": "29 · 마스터 품질 체크리스트",
+        "path": "GoldWiki/29_QUALITY_CHECKLIST.md"
+      },
+      {
+        "title": "30 · 테스트 전략",
+        "path": "GoldWiki/30_TEST_STRATEGY.md"
+      },
+      {
+        "title": "31 · 릴리스 프로세스",
+        "path": "GoldWiki/31_RELEASE_PROCESS.md"
+      },
+      {
+        "title": "32 · 의사결정 로그(Decision Log / ADR)",
+        "path": "GoldWiki/32_DECISION_LOG.md"
+      },
+      {
+        "title": "33 · 회의록 표준(Meeting Note)",
+        "path": "GoldWiki/33_MEETING_NOTE.md"
+      },
+      {
+        "title": "34 · 클라이언트 지식베이스(Client Knowledge)",
+        "path": "GoldWiki/34_CLIENT_KNOWLEDGE.md"
+      },
+      {
+        "title": "35 · 프로젝트 메모리(Project Memory)",
+        "path": "GoldWiki/35_PROJECT_MEMORY.md"
+      },
+      {
+        "title": "36 · 레퍼런스 라이브러리(Reference Library)",
+        "path": "GoldWiki/36_REFERENCE_LIBRARY.md"
+      },
+      {
+        "title": "37 · 베스트 프랙티스(Best Practices) — 지혜 계층",
+        "path": "GoldWiki/37_BEST_PRACTICES.md"
+      },
+      {
+        "title": "38 · 템플릿 라이브러리(Template Library)",
+        "path": "GoldWiki/38_TEMPLATE_LIBRARY.md"
+      },
+      {
+        "title": "39 · 공통 오류와 해결책(Common Errors)",
+        "path": "GoldWiki/39_COMMON_ERRORS.md"
+      },
+      {
+        "title": "40 · 프롬프트 라이브러리(Prompt Library)",
+        "path": "GoldWiki/40_PROMPT_LIBRARY.md"
+      }
+    ],
+    "topics": {
+      "AI": [
+        {
+          "title": "AI 자동화 가이드 — 멀티에이전트·GoldWiki RAG·프롬프트·평가·가드레일",
+          "path": "GoldWiki/AI/AIAutomationGuide.md"
+        },
+        {
+          "title": "AI — AI 자동화 지식 폴더",
+          "path": "GoldWiki/AI/README.md"
+        }
+      ],
+      "Backend": [
+        {
+          "title": "백엔드 엔지니어링 가이드",
+          "path": "GoldWiki/Backend/BackendGuide.md"
+        },
+        {
+          "title": "Backend — 백엔드 지식 폴더",
+          "path": "GoldWiki/Backend/README.md"
+        }
+      ],
+      "Brand": [
+        {
+          "title": "브랜드 경험(BX) 가이드라인 (Brand Experience Guidelines)",
+          "path": "GoldWiki/Brand/BXGuidelines.md"
+        },
+        {
+          "title": "Brand 토픽 — GoldWiki",
+          "path": "GoldWiki/Brand/README.md"
+        }
+      ],
+      "Business": [
+        {
+          "title": "Business — 비즈니스 분석 토픽",
+          "path": "GoldWiki/Business/README.md"
+        }
+      ],
+      "Company": [
+        {
+          "title": "Company — 회사 토픽",
+          "path": "GoldWiki/Company/README.md"
+        }
+      ],
+      "Data": [
+        {
+          "title": "데이터 분석 가이드 — 데이터 모델링·지표 정의·대시보드",
+          "path": "GoldWiki/Data/DataAnalyticsGuide.md"
+        },
+        {
+          "title": "Data — 데이터/분석 지식 폴더",
+          "path": "GoldWiki/Data/README.md"
+        }
+      ],
+      "DecisionLog": [
+        {
+          "title": "DecisionLog — 의사결정 로그 토픽",
+          "path": "GoldWiki/DecisionLog/README.md"
+        }
+      ],
+      "Delivery": [
+        {
+          "title": "최종 납품 체크리스트 (Final Delivery Checklist)",
+          "path": "GoldWiki/Delivery/FinalDeliveryChecklist.md"
+        },
+        {
+          "title": "Delivery — 납품·인수 토픽",
+          "path": "GoldWiki/Delivery/README.md"
+        }
+      ],
+      "DesignSystem": [
+        {
+          "title": "디자인 시스템 가이드 (Design System Guide)",
+          "path": "GoldWiki/DesignSystem/DesignSystemGuide.md"
+        },
+        {
+          "title": "DesignSystem 토픽 — GoldWiki",
+          "path": "GoldWiki/DesignSystem/README.md"
+        }
+      ],
+      "Foundation": [
+        {
+          "title": "의사결정 기록 (Decision Log · ADR 방법론)",
+          "path": "GoldWiki/Foundation/DecisionLog.md"
+        },
+        {
+          "title": "조직 운영 원칙 (Operating Principles)",
+          "path": "GoldWiki/Foundation/OperatingPrinciples.md"
+        },
+        {
+          "title": "프로젝트 메모리 (Project Memory)",
+          "path": "GoldWiki/Foundation/ProjectMemory.md"
+        },
+        {
+          "title": "전사 품질 기준 (Quality Standard · DoD · Gates)",
+          "path": "GoldWiki/Foundation/QualityStandard.md"
+        },
+        {
+          "title": "Foundation — 기초 토픽",
+          "path": "GoldWiki/Foundation/README.md"
+        }
+      ],
+      "Frontend": [
+        {
+          "title": "프론트엔드 엔지니어링 가이드",
+          "path": "GoldWiki/Frontend/FrontendGuide.md"
+        },
+        {
+          "title": "Frontend — 프론트엔드 지식 폴더",
+          "path": "GoldWiki/Frontend/README.md"
+        }
+      ],
+      "Industry": [
+        {
+          "title": "AI 서비스/플랫폼 (AI Service & Platform)",
+          "path": "GoldWiki/Industry/AIService.md"
+        },
+        {
+          "title": "은행/금융 (Banking)",
+          "path": "GoldWiki/Industry/Banking.md"
+        },
+        {
+          "title": "CRM/고객관리 (Customer Relationship Management)",
+          "path": "GoldWiki/Industry/CRM.md"
+        },
+        {
+          "title": "이커머스/리테일 (Commerce & Retail)",
+          "path": "GoldWiki/Industry/Commerce.md"
+        },
+        {
+          "title": "대기업 포털/인트라넷 (Enterprise Portal & Intranet)",
+          "path": "GoldWiki/Industry/EnterprisePortal.md"
+        },
+        {
+          "title": "호텔/호스피탤리티 (Hotel & Hospitality)",
+          "path": "GoldWiki/Industry/Hotel.md"
+        },
+        {
+          "title": "보험 (Insurance)",
+          "path": "GoldWiki/Industry/Insurance.md"
+        },
+        {
+          "title": "멤버십/구독 (Membership & Subscription)",
+          "path": "GoldWiki/Industry/Membership.md"
+        },
+        {
+          "title": "공공 (Public Sector)",
+          "path": "GoldWiki/Industry/PublicSector.md"
+        },
+        {
+          "title": "Industry — 업종 지식 인덱스",
+          "path": "GoldWiki/Industry/README.md"
+        },
+        {
+          "title": "통신 (Telecom)",
+          "path": "GoldWiki/Industry/Telecom.md"
+        }
+      ],
+      "Organization": [
+        {
+          "title": "에이전트 공통 운영 규칙 (Agent Operating Rules)",
+          "path": "GoldWiki/Organization/AgentOperatingRules.md"
+        },
+        {
+          "title": "조직 지도 (Organization Map)",
+          "path": "GoldWiki/Organization/OrganizationMap.md"
+        },
+        {
+          "title": "Organization — 조직 토픽",
+          "path": "GoldWiki/Organization/README.md"
+        }
+      ],
+      "PMO": [
+        {
+          "title": "PMO — 프로젝트 관리 토픽",
+          "path": "GoldWiki/PMO/README.md"
+        },
+        {
+          "title": "WBS 작성 가이드 (Work Breakdown Structure Guide)",
+          "path": "GoldWiki/PMO/WBSGuide.md"
+        }
+      ],
+      "ProjectMemory": [
+        {
+          "title": "ProjectMemory — 프로젝트 메모리 토픽",
+          "path": "GoldWiki/ProjectMemory/README.md"
+        }
+      ],
+      "PromptLibrary": [
+        {
+          "title": "PromptLibrary — 프롬프트 라이브러리 토픽",
+          "path": "GoldWiki/PromptLibrary/README.md"
+        }
+      ],
+      "Proposal": [
+        {
+          "title": "AI 고객 시뮬레이션 (AI Client Simulation)",
+          "path": "GoldWiki/Proposal/AIClientSimulation.md"
+        },
+        {
+          "title": "AI 경쟁사 시뮬레이션 (AI Competitor Simulation)",
+          "path": "GoldWiki/Proposal/AICompetitorSimulation.md"
+        },
+        {
+          "title": "AI 평가위원 (AI Evaluation Board)",
+          "path": "GoldWiki/Proposal/AIEvaluationBoard.md"
+        },
+        {
+          "title": "경영 요약 작성 가이드 + 템플릿 (Executive Summary)",
+          "path": "GoldWiki/Proposal/ExecutiveSummaryTemplate.md"
+        },
+        {
+          "title": "제안 전략 (Proposal Strategy)",
+          "path": "GoldWiki/Proposal/ProposalStrategy.md"
+        },
+        {
+          "title": "Proposal — 제안 전략 토픽",
+          "path": "GoldWiki/Proposal/README.md"
+        }
+      ],
+      "Publishing": [
+        {
+          "title": "시맨틱 HTML + 토큰 기반 CSS 퍼블리싱 가이드",
+          "path": "GoldWiki/Publishing/HTMLCSSGuide.md"
+        },
+        {
+          "title": "Publishing — 퍼블리싱 지식 폴더",
+          "path": "GoldWiki/Publishing/README.md"
+        }
+      ],
+      "QA": [
+        {
+          "title": "품질 검증 체크리스트 (Quality Review Checklist)",
+          "path": "GoldWiki/QA/QualityReviewChecklist.md"
+        },
+        {
+          "title": "QA — 품질 보증 토픽",
+          "path": "GoldWiki/QA/README.md"
+        }
+      ],
+      "RFP": [
+        {
+          "title": "평가기준 분석 (Evaluation Criteria Analysis)",
+          "path": "GoldWiki/RFP/EvaluationCriteriaAnalysis.md"
+        },
+        {
+          "title": "RFP — RFP 분석 토픽",
+          "path": "GoldWiki/RFP/README.md"
+        },
+        {
+          "title": "RFP 분석 프레임워크",
+          "path": "GoldWiki/RFP/RFPAnalysisFramework.md"
+        },
+        {
+          "title": "요구사항 추출 (Requirement Extraction)",
+          "path": "GoldWiki/RFP/RequirementExtraction.md"
+        }
+      ],
+      "Research": [
+        {
+          "title": "Research — 업종/시장 리서치 토픽",
+          "path": "GoldWiki/Research/README.md"
+        }
+      ],
+      "Templates": [
+        {
+          "title": "Templates — 템플릿 라이브러리 토픽",
+          "path": "GoldWiki/Templates/README.md"
+        }
+      ],
+      "UI": [
+        {
+          "title": "UI 토픽 — GoldWiki",
+          "path": "GoldWiki/UI/README.md"
+        },
+        {
+          "title": "UI 가이드라인 (UI Guidelines)",
+          "path": "GoldWiki/UI/UIGuidelines.md"
+        }
+      ],
+      "UX": [
+        {
+          "title": "정보 구조(IA) 가이드 (Information Architecture Guide)",
+          "path": "GoldWiki/UX/InformationArchitectureGuide.md"
+        },
+        {
+          "title": "UX 토픽 — GoldWiki",
+          "path": "GoldWiki/UX/README.md"
+        },
+        {
+          "title": "UX 전략 프레임워크 (UX Strategy Framework)",
+          "path": "GoldWiki/UX/UXStrategyFramework.md"
+        },
+        {
+          "title": "유저 플로우 가이드 (User Flow Guide)",
+          "path": "GoldWiki/UX/UserFlowGuide.md"
+        }
+      ]
+    }
+  },
+  "teams": [
+    {
+      "title": "AI·데이터팀 (AI & Data Team) — 역할 카탈로그",
+      "path": "Agents/AIData.md"
+    },
+    {
+      "title": "BXBrand — 브랜드경험(BX)팀 역할 카탈로그",
+      "path": "Agents/BXBrand.md"
+    },
+    {
+      "title": "백엔드팀 (Backend Team) — 역할 카탈로그",
+      "path": "Agents/Backend.md"
+    },
+    {
+      "title": "BusinessConsulting — 비즈니스 컨설팅팀 역할 카탈로그",
+      "path": "Agents/BusinessConsulting.md"
+    },
+    {
+      "title": "COLLABORATION_MAP — 에이전트 간 인계(handoff) 흐름 (ClubSchool AI OS v1.0)",
+      "path": "Agents/COLLABORATION_MAP.md"
+    },
+    {
+      "title": "고객시뮬레이션팀 (Client Simulation Team) — 역할 카탈로그",
+      "path": "Agents/ClientSimulation.md"
+    },
+    {
+      "title": "DesignSystem — 디자인시스템팀 역할 카탈로그",
+      "path": "Agents/DesignSystem.md"
+    },
+    {
+      "title": "ESCALATION_POLICY — 에스컬레이션 규칙 (ClubSchool AI OS v1.0)",
+      "path": "Agents/ESCALATION_POLICY.md"
+    },
+    {
+      "title": "Executive — 경영·리더십팀 역할 카탈로그",
+      "path": "Agents/Executive.md"
+    },
+    {
+      "title": "프론트엔드팀 (Frontend Team) — 역할 카탈로그",
+      "path": "Agents/Frontend.md"
+    },
+    {
+      "title": "업종전문가팀 (Industry Specialists Team) — 역할 카탈로그",
+      "path": "Agents/IndustrySpecialists.md"
+    },
+    {
+      "title": "ORG_CHART — 조직도·보고·의사결정 권한 (ClubSchool AI OS v1.0)",
+      "path": "Agents/ORG_CHART.md"
+    },
+    {
+      "title": "PMO·딜리버리팀 (PMO & Delivery Team) — 역할 카탈로그",
+      "path": "Agents/PMODelivery.md"
+    },
+    {
+      "title": "ProductUX — 프로덕트·UX팀 역할 카탈로그",
+      "path": "Agents/ProductUX.md"
+    },
+    {
+      "title": "퍼블리싱팀 (Publishing Team) — 역할 카탈로그",
+      "path": "Agents/Publishing.md"
+    },
+    {
+      "title": "QA·보안팀 (QA & Security Team) — 역할 카탈로그",
+      "path": "Agents/QASecurity.md"
+    },
+    {
+      "title": "RACI — 21단계 파이프라인 × 22 에이전트 (ClubSchool AI OS v1.0)",
+      "path": "Agents/RACI.md"
+    },
+    {
+      "title": "Agents — 에이전트 조직 개요 (ClubSchool AI OS v1.0)",
+      "path": "Agents/README.md"
+    },
+    {
+      "title": "Research — 리서치팀 역할 카탈로그",
+      "path": "Agents/Research.md"
+    },
+    {
+      "title": "SalesProposal — 영업·제안팀 역할 카탈로그",
+      "path": "Agents/SalesProposal.md"
+    },
+    {
+      "title": "UIDesign — UI 디자인팀 역할 카탈로그",
+      "path": "Agents/UIDesign.md"
+    }
+  ]
+}

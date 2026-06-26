@@ -1,0 +1,459 @@
+/* ClubSchool AI OS — 콘솔 애플리케이션
+ * 정적 SPA. manifest.json 을 읽어 에이전트/커맨드/워크플로우/문서/산출물을 렌더링하고,
+ * (선택) Anthropic API 키가 있으면 브라우저에서 직접 에이전트와 대화한다.
+ * 서버: ClubSchool-AI-OS/ 에서  python3 -m http.server 8000  → http://localhost:8000/Console/
+ */
+'use strict';
+
+const S = {
+  manifest: null,
+  view: 'dashboard',
+  settings: loadSettings(),
+  active: null,        // 현재 작업 패널 컨텍스트 {kind, name, systemPrompt, path}
+  chat: [],            // {role, content}
+};
+
+/* ---------- 유틸 ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = (t) => (t || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const docUrl = (p) => new URL('../' + p, location.href).href; // Console/ 기준 → ClubSchool-AI-OS/ 루트
+
+function loadSettings() {
+  try { return JSON.parse(localStorage.getItem('cs.settings')) || {}; } catch { return {}; }
+}
+function saveSettings(s) { localStorage.setItem('cs.settings', JSON.stringify(s)); }
+
+function toast(msg, ms = 2200) {
+  const t = $('#toast'); t.textContent = msg; t.classList.remove('hidden');
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.add('hidden'), ms);
+}
+
+function renderMd(text) {
+  const clean = (text || '').replace(/^---\n[\s\S]*?\n---\n/, ''); // frontmatter 제거
+  if (window.marked) {
+    const html = window.marked.parse(clean, { breaks: false, gfm: true });
+    return window.DOMPurify ? window.DOMPurify.sanitize(html) : html;
+  }
+  // 폴백: 최소 렌더
+  return '<pre style="white-space:pre-wrap">' + esc(clean) + '</pre>';
+}
+
+async function fetchText(path) {
+  const r = await fetch(docUrl(path));
+  if (!r.ok) throw new Error(path + ' (' + r.status + ')');
+  return r.text();
+}
+
+function stripFrontmatter(t) { return (t || '').replace(/^---\n[\s\S]*?\n---\n/, ''); }
+
+/* ---------- 부트 ---------- */
+async function boot() {
+  try {
+    const r = await fetch('manifest.json');
+    S.manifest = await r.json();
+  } catch (e) {
+    $('#view').innerHTML = errorBox('manifest.json 을 불러오지 못했습니다. <br>ClubSchool-AI-OS/ 에서 <code>python3 Console/build-manifest.py</code> 실행 후, <code>python3 -m http.server</code> 로 서빙하고 <code>/Console/</code> 를 여세요.');
+    return;
+  }
+  $('#version-tag').textContent = '콘솔 · ' + (S.manifest.product || 'ClubSchool AI OS');
+  wireChrome();
+  refreshConn();
+  go('dashboard');
+}
+
+function errorBox(html) {
+  return `<div class="form" style="border-color:var(--err)"><h2 style="margin-top:0;color:var(--err)">오류</h2><p>${html}</p></div>`;
+}
+
+function wireChrome() {
+  $$('.nav-item').forEach(b => b.onclick = () => go(b.dataset.view));
+  $('#btn-settings').onclick = () => go('settings');
+  $('#btn-quickstart').onclick = quickStart;
+  $('#wp-close').onclick = closePanel;
+  $('#wp-send').onclick = sendMessage;
+  $('#wp-copy').onclick = copyPrompt;
+  $('#global-search').oninput = onSearch;
+  $('#wp-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) sendMessage();
+  });
+}
+
+function go(view) {
+  S.view = view;
+  $$('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+  const V = $('#view');
+  ({ dashboard: viewDashboard, agents: viewAgents, commands: viewCommands, workflows: viewWorkflows,
+     goldwiki: viewGoldwiki, templates: viewTemplates, examples: viewExamples, qa: viewQA, settings: viewSettings }[view] || viewDashboard)(V);
+}
+
+function refreshConn() {
+  const on = !!(S.settings.apiKey);
+  const el = $('#conn-state');
+  el.textContent = on ? '● API 연결됨' : '● 프롬프트 모드';
+  el.className = 'conn-pill ' + (on ? 'conn-on' : 'conn-off');
+}
+
+/* ---------- 대시보드 ---------- */
+function viewDashboard(V) {
+  const m = S.manifest;
+  const topicCount = Object.keys(m.goldwiki.topics).length;
+  const wikiDocs = m.goldwiki.numbered.length + Object.values(m.goldwiki.topics).reduce((a, b) => a + b.length, 0);
+  V.innerHTML = `
+    <div class="page-head"><h1>대시보드</h1>
+      <p>브라우저에서 ${m.product} 의 디지털 조직과 직접 일하세요. 에이전트와 대화하고, 커맨드를 실행하고, 산출물을 보고 검증합니다.</p></div>
+    <div class="kpis">
+      <div class="kpi"><div class="n">${m.agents.length}</div><div class="l">활성 에이전트</div></div>
+      <div class="kpi"><div class="n">${m.commands.length}</div><div class="l">슬래시 커맨드</div></div>
+      <div class="kpi"><div class="n">${m.workflows.length}</div><div class="l">워크플로우</div></div>
+      <div class="kpi"><div class="n">${wikiDocs}</div><div class="l">Gold Wiki 문서</div></div>
+      <div class="kpi"><div class="n">${topicCount}</div><div class="l">지식 토픽</div></div>
+      <div class="kpi"><div class="n">${m.templates.length}</div><div class="l">템플릿</div></div>
+    </div>
+    <div class="section-title">바로 시작</div>
+    <div class="cards">
+      <div class="card" data-qa="rfp"><h3>📥 RFP 분석 시작</h3><div class="desc">RFP를 붙여넣고 rfp-strategy-lead 에이전트가 요구사항·평가기준·리스크를 분석합니다.</div><div class="tag">/rfp-start</div></div>
+      <div class="card" data-qa="proposal"><h3>📝 제안 전략 수립</h3><div class="desc">proposal-lead 가 윈테마·스토리라인·경영요약을 설계합니다.</div><div class="tag">/proposal-build</div></div>
+      <div class="card" data-qa="ux"><h3>🎨 UX/UI 기획</h3><div class="desc">ux-research-lead 와 IA·유저플로우·화면목록을 만듭니다.</div><div class="tag">/ux-start</div></div>
+      <div class="card" data-qa="qa"><h3>✅ 품질 검증</h3><div class="desc">10단계 품질 검증 체계로 산출물을 점검합니다.</div><div class="tag">품질 검증</div></div>
+    </div>
+    <div class="section-title">추천 워크플로우</div>
+    <div class="cards" id="dash-wf"></div>`;
+  const map = { rfp: () => openCommandByName('/rfp-start'), proposal: () => openCommandByName('/proposal-build'),
+    ux: () => openCommandByName('/ux-start'), qa: () => go('qa') };
+  $$('#view .card[data-qa]').forEach(c => c.onclick = map[c.dataset.qa]);
+  const wf = $('#dash-wf');
+  m.workflows.slice(0, 6).forEach(w => {
+    const c = document.createElement('div'); c.className = 'card';
+    c.innerHTML = `<h3>🔀 ${esc(w.title)}</h3><div class="desc">${esc(w.path)}</div>`;
+    c.onclick = () => openDoc(w.path, w.title);
+    wf.appendChild(c);
+  });
+}
+
+function quickStart() {
+  toast('설정에서 Anthropic API 키를 넣으면 브라우저에서 바로 대화할 수 있어요. 키 없이도 프롬프트 복사 모드로 사용 가능합니다.');
+  go('settings');
+}
+
+/* ---------- 에이전트 ---------- */
+function viewAgents(V) {
+  V.innerHTML = `<div class="page-head"><h1>에이전트</h1><p>활성 서브에이전트 ${S.manifest.agents.length}명. 카드를 눌러 상세를 보고 바로 대화하세요.</p></div><div class="cards" id="agent-cards"></div>`;
+  const wrap = $('#agent-cards');
+  S.manifest.agents.forEach(a => {
+    const c = document.createElement('div'); c.className = 'card';
+    c.innerHTML = `<h3>🤖 ${esc(a.name)}</h3><div class="desc">${esc(a.description || '')}</div><div class="tag">${esc(a.tools || 'Read, Write, Edit')}</div>`;
+    c.onclick = () => openAgent(a);
+    wrap.appendChild(c);
+  });
+}
+
+async function openAgent(a) {
+  let md = '';
+  try { md = await fetchText(a.path); } catch (e) { md = '에이전트 정의를 불러오지 못했습니다: ' + e.message; }
+  S.active = { kind: 'agent', name: a.name, path: a.path, systemPrompt: stripFrontmatter(md), raw: md };
+  S.chat = [];
+  openPanel(a.name, '에이전트 · ' + a.path);
+  pushSys(`이 패널은 **${a.name}** 에이전트입니다. 작업을 입력하면 ${S.settings.apiKey ? 'API로 직접 응답합니다.' : '실행 프롬프트를 만들어 드립니다(설정에서 API 키 입력 시 직접 대화).'}\n\n에이전트 정의는 GoldWiki를 단일 진실 공급원으로 따릅니다.`);
+}
+
+/* ---------- 커맨드 ---------- */
+function viewCommands(V) {
+  V.innerHTML = `<div class="page-head"><h1>커맨드</h1><p>슬래시 커맨드 ${S.manifest.commands.length}개. 선택하면 인자를 채워 실행 프롬프트를 만들거나 바로 실행합니다.</p></div><div class="cards" id="cmd-cards"></div>`;
+  const wrap = $('#cmd-cards');
+  S.manifest.commands.forEach(c => {
+    const el = document.createElement('div'); el.className = 'card';
+    el.innerHTML = `<h3>⌘ ${esc(c.name)}</h3><div class="desc">${esc(c.description || '')}</div>${c.argumentHint ? `<div class="tag">${esc(c.argumentHint)}</div>` : ''}`;
+    el.onclick = () => openCommand(c);
+    wrap.appendChild(el);
+  });
+}
+function openCommandByName(name) {
+  const c = S.manifest.commands.find(x => x.name === name);
+  if (c) openCommand(c); else toast(name + ' 커맨드를 찾을 수 없습니다.');
+}
+async function openCommand(c) {
+  let md = '';
+  try { md = await fetchText(c.path); } catch (e) { md = '커맨드를 불러오지 못했습니다: ' + e.message; }
+  S.active = { kind: 'command', name: c.name, path: c.path, systemPrompt: ORCH_SYSTEM, body: stripFrontmatter(md), hint: c.argumentHint };
+  S.chat = [];
+  openPanel(c.name, '커맨드 · ' + c.path);
+  $('#wp-input').placeholder = c.argumentHint ? ('인자: ' + c.argumentHint) : '이 커맨드에 전달할 입력(예: RFP 본문/경로)을 적으세요.';
+  pushSys(`**${c.name}** 커맨드입니다. 아래에 입력값을 적고 **전송**(API 직접 실행) 또는 **프롬프트 복사**(Claude Code에 붙여넣기)를 누르세요.`);
+}
+
+/* ---------- 문서 뷰(워크플로우/템플릿/예시/Gold Wiki) ---------- */
+function listDocsView(V, title, sub, items, labelKey) {
+  V.innerHTML = `<div class="page-head"><h1>${title}</h1><p>${sub}</p></div><div class="cards" id="doc-cards"></div>`;
+  const wrap = $('#doc-cards');
+  items.forEach(it => {
+    const c = document.createElement('div'); c.className = 'card';
+    c.innerHTML = `<h3>${esc(it[labelKey] || it.title)}</h3><div class="desc">${esc(it.path)}</div>`;
+    c.onclick = () => openDoc(it.path, it[labelKey] || it.title);
+    wrap.appendChild(c);
+  });
+}
+function viewWorkflows(V) { listDocsView(V, '워크플로우', `핵심 워크플로우 ${S.manifest.workflows.length}개 런북.`, S.manifest.workflows, 'title'); }
+function viewTemplates(V) { listDocsView(V, '템플릿', `복사용 산출물 템플릿 ${S.manifest.templates.length}개.`, S.manifest.templates, 'title'); }
+function viewExamples(V) { listDocsView(V, '산출물 예시', `완성 산출물 모범 예시 ${S.manifest.examples.length}개.`, S.manifest.examples, 'title'); }
+
+function viewGoldwiki(V) {
+  const m = S.manifest.goldwiki;
+  V.innerHTML = `<div class="page-head"><h1>Gold Wiki</h1><p>단일 진실 공급원. 토픽 폴더와 번호형 문서를 탐색하고 렌더링합니다.</p></div>
+    <div class="split">
+      <div class="tree" id="wiki-tree"></div>
+      <div class="doc" id="wiki-doc"><div class="md"><p style="color:var(--muted)">왼쪽에서 문서를 선택하세요.</p></div></div>
+    </div>`;
+  const tree = $('#wiki-tree');
+  const topics = document.createElement('div');
+  Object.entries(m.topics).forEach(([folder, docs]) => {
+    const d = document.createElement('details');
+    d.innerHTML = `<summary>📁 ${esc(folder)} <span class="badge">${docs.length}</span></summary>`;
+    docs.forEach(doc => d.appendChild(treeLink(doc)));
+    topics.appendChild(d);
+  });
+  const numbered = document.createElement('details');
+  numbered.innerHTML = `<summary>🔢 번호형 문서 <span class="badge">${m.numbered.length}</span></summary>`;
+  m.numbered.forEach(doc => numbered.appendChild(treeLink(doc)));
+  tree.appendChild(topics); tree.appendChild(numbered);
+}
+function treeLink(doc) {
+  const a = document.createElement('a'); a.textContent = doc.title; a.href = 'javascript:void 0';
+  a.onclick = () => { $$('#wiki-tree a').forEach(x => x.classList.remove('active')); a.classList.add('active'); openWikiDoc(doc.path); };
+  return a;
+}
+async function openWikiDoc(path) {
+  const host = $('#wiki-doc');
+  host.innerHTML = '<div class="md"><p style="color:var(--muted)">불러오는 중…</p></div>';
+  try {
+    const t = await fetchText(path);
+    host.innerHTML = `<div class="doc-toolbar"><span class="doc-path">${esc(path)}</span><div style="flex:1"></div>
+      <button class="btn ghost" id="dv-copy">원문 복사</button></div><div class="md">${renderMd(t)}</div>`;
+    $('#dv-copy').onclick = () => { navigator.clipboard.writeText(t); toast('원문을 복사했습니다.'); };
+  } catch (e) { host.innerHTML = errorBox('문서를 불러오지 못했습니다: ' + esc(e.message)); }
+}
+
+/* 단일 문서 모달 대용 — 전체 뷰로 표시 */
+async function openDoc(path, title) {
+  const V = $('#view');
+  V.innerHTML = `<div class="page-head"><h1>${esc(title || '문서')}</h1></div>
+    <div class="doc"><div class="doc-toolbar"><span class="doc-path">${esc(path)}</span><div style="flex:1"></div>
+      <button class="btn ghost" id="dv-back">← 목록</button>
+      <button class="btn ghost" id="dv-copy">원문 복사</button>
+      <button class="btn" id="dv-tpl">작업으로 보내기</button></div>
+    <div class="md" id="dv-body"><p style="color:var(--muted)">불러오는 중…</p></div></div>`;
+  $('#dv-back').onclick = () => go(S.view);
+  try {
+    const t = await fetchText(path);
+    $('#dv-body').innerHTML = renderMd(t);
+    $('#dv-copy').onclick = () => { navigator.clipboard.writeText(t); toast('원문을 복사했습니다.'); };
+    $('#dv-tpl').onclick = () => {
+      S.active = { kind: 'doc', name: title, path, systemPrompt: ORCH_SYSTEM, body: stripFrontmatter(t) };
+      S.chat = []; openPanel(title, '문서 기반 작업 · ' + path);
+      pushSys('이 문서를 컨텍스트로 작업을 요청하세요.');
+    };
+  } catch (e) { $('#dv-body').innerHTML = errorBox('문서를 불러오지 못했습니다: ' + esc(e.message)); }
+}
+
+/* ---------- 품질 검증(10단계) ---------- */
+const QA_STEPS = [
+  ['RFP 이해도 검증', '사업 배경·목표·범위를 정확히 이해했는가. 발주처 의도와 정렬되는가.'],
+  ['요구사항 누락 검증', '명시·암묵 요구사항을 빠짐없이 추출하고 추적성을 확보했는가.'],
+  ['평가항목 대응 검증', '모든 평가기준에 대응 근거와 배점 전략이 있는가.'],
+  ['UX/UI 실현 가능성 검증', '제안한 UX/UI가 사용자·기술·일정 제약 안에서 실현 가능한가.'],
+  ['기술 구현 가능성 검증', '아키텍처·연동·성능·보안이 구현 가능하고 표준을 따르는가.'],
+  ['일정/WBS 현실성 검증', 'WBS·공수·마일스톤이 현실적이고 의존성이 반영됐는가.'],
+  ['리스크 대응 검증', '주요 리스크를 식별하고 완화·대응 계획이 있는가.'],
+  ['고객 설득력 검증', '윈테마·차별점·근거가 고객을 설득하기에 충분한가.'],
+  ['임원 보고 적합성 검증', '경영진 관점의 요약·의사결정 포인트가 명확한가.'],
+  ['최종 제출 적합성 검증', '형식·분량·컴플라이언스·오류 없이 제출 가능한가.'],
+];
+function viewQA(V) {
+  V.innerHTML = `<div class="page-head"><h1>품질 검증 — 10단계 체계</h1><p>산출물을 제출 전 검증합니다. 항목을 체크하면 점수가 계산되고, 보고서로 내보낼 수 있습니다.</p></div>
+    <div class="qa-score"><div><div class="big" id="qa-num">0%</div><div class="l">통과율</div></div>
+      <div class="qa-bar"><i id="qa-fill" style="width:0%"></i></div>
+      <button class="btn" id="qa-export">보고서 내보내기(.md)</button></div>
+    <div class="qa-grid" id="qa-grid"></div>`;
+  const g = $('#qa-grid');
+  QA_STEPS.forEach((s, i) => {
+    const el = document.createElement('label'); el.className = 'qa-item';
+    el.innerHTML = `<input type="checkbox" data-i="${i}"><div><div class="t">${i + 1}. ${esc(s[0])}</div><div class="d">${esc(s[1])}</div></div>`;
+    g.appendChild(el);
+  });
+  g.addEventListener('change', updateQA);
+  $('#qa-export').onclick = exportQA;
+}
+function updateQA() {
+  const checks = $$('#qa-grid input');
+  const done = checks.filter(c => c.checked).length;
+  const pct = Math.round(done / checks.length * 100);
+  $('#qa-num').textContent = pct + '%';
+  $('#qa-fill').style.width = pct + '%';
+}
+function exportQA() {
+  const checks = $$('#qa-grid input');
+  let md = `# 품질 검증 보고서\n\n생성: ${new Date().toLocaleString('ko-KR')}\n\n| # | 검증 항목 | 결과 |\n|---|---|---|\n`;
+  checks.forEach((c, i) => md += `| ${i + 1} | ${QA_STEPS[i][0]} | ${c.checked ? '✅ 통과' : '⬜ 미검증'} |\n`);
+  const done = checks.filter(c => c.checked).length;
+  md += `\n**통과율: ${Math.round(done / checks.length * 100)}% (${done}/${checks.length})**\n\n> 기준 문서: GoldWiki/QA/QualityReviewChecklist.md\n`;
+  download('quality-review-report.md', md);
+  toast('품질 검증 보고서를 내보냈습니다.');
+}
+
+/* ---------- 설정 ---------- */
+function viewSettings(V) {
+  const s = S.settings;
+  V.innerHTML = `<div class="page-head"><h1>설정</h1><p>API 키는 이 브라우저(localStorage)에만 저장되며 서버로 전송되지 않습니다.</p></div>
+  <div class="form">
+    <label>Anthropic API 키 <span class="hint">(선택) 입력 시 브라우저에서 에이전트와 직접 대화합니다.</span></label>
+    <input id="set-key" type="password" placeholder="sk-ant-..." value="${esc(s.apiKey || '')}" />
+    <div class="row">
+      <div><label>모델</label>
+        <select id="set-model">
+          ${['claude-opus-4-8', 'claude-sonnet-4-6', 'claude-haiku-4-5-20251001'].map(m => `<option ${s.model === m ? 'selected' : ''}>${m}</option>`).join('')}
+        </select></div>
+      <div><label>최대 출력 토큰</label><input id="set-tokens" type="number" value="${s.maxTokens || 4096}" /></div>
+    </div>
+    <label>응답 언어</label>
+    <select id="set-lang"><option ${s.lang !== 'en' ? 'selected' : ''} value="ko">한국어</option><option ${s.lang === 'en' ? 'selected' : ''} value="en">English</option></select>
+    <div style="margin-top:18px;display:flex;gap:8px">
+      <button class="btn primary" id="set-save">저장</button>
+      <button class="btn ghost" id="set-clear">키 삭제</button>
+    </div>
+    <p class="hint" style="margin-top:16px">⚠️ 브라우저 직접 호출은 <code>anthropic-dangerous-direct-browser-access</code> 헤더를 사용합니다. 개인 PC/사내망에서만 사용하고, 공용 환경에서는 프롬프트 복사 모드를 권장합니다.</p>
+  </div>`;
+  $('#set-save').onclick = () => {
+    S.settings = { apiKey: $('#set-key').value.trim(), model: $('#set-model').value, maxTokens: +$('#set-tokens').value || 4096, lang: $('#set-lang').value };
+    saveSettings(S.settings); refreshConn(); toast('설정을 저장했습니다.');
+  };
+  $('#set-clear').onclick = () => { S.settings.apiKey = ''; saveSettings(S.settings); refreshConn(); $('#set-key').value = ''; toast('API 키를 삭제했습니다.'); };
+}
+
+/* ---------- 작업 패널(대화/실행) ---------- */
+function openPanel(title, sub) {
+  $('#wp-title').textContent = title;
+  $('#wp-sub').textContent = sub || '';
+  $('#wp-messages').innerHTML = '';
+  $('#workpanel').classList.remove('hidden');
+}
+function closePanel() { $('#workpanel').classList.add('hidden'); S.active = null; }
+function pushSys(text) { addMsg('sys', text); }
+function addMsg(role, content) {
+  S.chat.push({ role, content });
+  const m = document.createElement('div'); m.className = 'msg ' + role;
+  m.innerHTML = (role === 'bot' || role === 'sys') ? `<div class="md">${renderMd(content)}</div>` : esc(content);
+  const box = $('#wp-messages'); box.appendChild(m); box.scrollTop = box.scrollHeight;
+  return m;
+}
+
+function buildPrompt(userText) {
+  const a = S.active; if (!a) return userText;
+  let p = '';
+  if (a.kind === 'agent') {
+    p += `당신은 ClubSchool AI OS의 "${a.name}" 에이전트입니다. 아래 역할 정의를 따르세요.\n\n----- 에이전트 정의 -----\n${a.systemPrompt}\n----- 정의 끝 -----\n\n`;
+  } else if (a.kind === 'command') {
+    p += `다음 커맨드 명세에 따라 작업하세요.\n\n----- 커맨드(${a.name}) -----\n${a.body}\n----- 명세 끝 -----\n\n`;
+  } else if (a.kind === 'doc') {
+    p += `다음 문서를 컨텍스트로 사용하세요.\n\n----- 문서(${a.path}) -----\n${a.body}\n----- 문서 끝 -----\n\n`;
+  }
+  if ($('#wp-usewiki').checked) p += wikiIndexNote();
+  p += `\n[요청]\n${userText}\n`;
+  return p;
+}
+function wikiIndexNote() {
+  const m = S.manifest;
+  const topics = Object.keys(m.goldwiki.topics).join(', ');
+  return `[Gold Wiki 거버넌스]\n- Gold Wiki(단일 진실 공급원)를 먼저 참조하고 표준을 따르세요.\n- 사용 가능한 지식 토픽: ${topics}.\n- 모든 결정은 DecisionLog/ProjectMemory/BestPractices/ReferenceLibrary를 갱신해야 합니다.\n`;
+}
+
+function copyPrompt() {
+  const text = $('#wp-input').value.trim();
+  if (!text) { toast('입력값을 먼저 작성하세요.'); return; }
+  const full = buildPrompt(text);
+  navigator.clipboard.writeText(full);
+  addMsg('user', text);
+  pushSys('실행 프롬프트를 클립보드에 복사했습니다. Claude Code 또는 claude.ai 에 붙여넣어 실행하세요.');
+  $('#wp-input').value = '';
+}
+
+async function sendMessage() {
+  const text = $('#wp-input').value.trim();
+  if (!text) return;
+  $('#wp-input').value = '';
+  addMsg('user', text);
+
+  if (!S.settings.apiKey) {
+    const full = buildPrompt(text);
+    navigator.clipboard.writeText(full);
+    pushSys('API 키가 없어 **프롬프트 복사 모드**로 동작했습니다. 실행 프롬프트를 클립보드에 복사했어요. 직접 대화하려면 설정에서 키를 입력하세요.');
+    return;
+  }
+  const loading = addMsg('bot', '_생각 중…_');
+  try {
+    const reply = await callAnthropic(text);
+    loading.querySelector('.md').innerHTML = renderMd(reply);
+    S.chat[S.chat.length - 1].content = reply;
+  } catch (e) {
+    loading.querySelector('.md').innerHTML = renderMd('⚠️ 호출 실패: ' + e.message + '\n\n키/모델/네트워크를 확인하세요. (브라우저 직접 호출은 CORS 정책상 일부 환경에서 제한될 수 있습니다.)');
+  }
+}
+
+async function callAnthropic(userText) {
+  const a = S.active;
+  // 시스템 프롬프트: 에이전트 정의 또는 오케스트레이터 + 거버넌스
+  let system = (a && a.kind === 'agent') ? a.systemPrompt : ORCH_SYSTEM;
+  if ($('#wp-usewiki').checked) system += '\n\n' + wikiIndexNote();
+  if (S.settings.lang !== 'en') system += '\n\n반드시 한국어로, 전문적이고 실무적으로 답하세요.';
+
+  // 사용자 메시지: 커맨드/문서 컨텍스트가 있으면 결합
+  let umsg = userText;
+  if (a && (a.kind === 'command' || a.kind === 'doc')) umsg = buildPrompt(userText);
+
+  const history = S.chat.filter(m => m.role === 'user' || m.role === 'bot')
+    .slice(0, -1) // 방금 추가한 로딩 bot 제외
+    .map(m => ({ role: m.role === 'bot' ? 'assistant' : 'user', content: m.content }));
+  history.push({ role: 'user', content: umsg });
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-api-key': S.settings.apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: S.settings.model || 'claude-opus-4-8',
+      max_tokens: S.settings.maxTokens || 4096,
+      system,
+      messages: history,
+    }),
+  });
+  if (!res.ok) {
+    let detail = res.status + '';
+    try { const j = await res.json(); detail = (j.error && j.error.message) || detail; } catch {}
+    throw new Error(detail);
+  }
+  const data = await res.json();
+  return (data.content || []).map(b => b.text || '').join('\n').trim() || '(빈 응답)';
+}
+
+/* ---------- 검색 ---------- */
+function onSearch(e) {
+  const q = e.target.value.trim().toLowerCase();
+  if (S.view !== 'agents' && S.view !== 'commands') return;
+  $$('#view .card').forEach(c => {
+    c.style.display = c.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+/* ---------- 기타 ---------- */
+function download(name, text) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type: 'text/markdown' }));
+  a.download = name; a.click(); URL.revokeObjectURL(a.href);
+}
+
+const ORCH_SYSTEM = `당신은 ClubSchool AI OS의 오케스트레이터입니다. Gold Wiki(단일 진실 공급원)의 표준과 거버넌스를 따르고, 적절한 전문 에이전트의 관점에서 경영진 수준의, 클라이언트 제출 가능한, 구현 가능한 산출물을 만듭니다. 플레이스홀더·모호한 표현을 쓰지 않습니다. 표·체크리스트·근거를 활용하고, 산출물 끝에 다음 단계와 품질 게이트를 제시합니다.`;
+
+boot();

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ClubSchool AI OS — 콘솔</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- 사이드바 -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">CS</div>
+        <div class="brand-text">
+          <strong>ClubSchool AI OS</strong>
+          <span id="version-tag">콘솔 v1.0</span>
+        </div>
+      </div>
+      <nav class="nav">
+        <button class="nav-item active" data-view="dashboard"><span>🏠</span> 대시보드</button>
+        <button class="nav-item" data-view="agents"><span>🤖</span> 에이전트</button>
+        <button class="nav-item" data-view="commands"><span>⌘</span> 커맨드</button>
+        <button class="nav-item" data-view="workflows"><span>🔀</span> 워크플로우</button>
+        <button class="nav-item" data-view="goldwiki"><span>📘</span> Gold Wiki</button>
+        <button class="nav-item" data-view="templates"><span>📄</span> 템플릿</button>
+        <button class="nav-item" data-view="examples"><span>📦</span> 산출물 예시</button>
+        <button class="nav-item" data-view="qa"><span>✅</span> 품질 검증</button>
+        <button class="nav-item" data-view="settings"><span>⚙️</span> 설정</button>
+      </nav>
+      <div class="sidebar-foot">
+        <div id="conn-state" class="conn-pill conn-off" title="API 연결 상태">● 프롬프트 모드</div>
+        <small>GoldWiki = 단일 진실 공급원</small>
+      </div>
+    </aside>
+
+    <!-- 메인 -->
+    <main class="main">
+      <header class="topbar">
+        <input id="global-search" class="search" type="search" placeholder="에이전트 · 문서 · 커맨드 검색…" />
+        <div class="topbar-actions">
+          <button id="btn-quickstart" class="btn ghost">빠른 시작</button>
+          <button id="btn-settings" class="btn">설정</button>
+        </div>
+      </header>
+      <section id="view" class="view"><!-- 동적 렌더 --></section>
+    </main>
+
+    <!-- 우측 작업 패널 (대화/실행) -->
+    <aside id="workpanel" class="workpanel hidden">
+      <div class="wp-head">
+        <div>
+          <div id="wp-title" class="wp-title">에이전트 대화</div>
+          <div id="wp-sub" class="wp-sub"></div>
+        </div>
+        <button id="wp-close" class="iconbtn" aria-label="닫기">✕</button>
+      </div>
+      <div id="wp-messages" class="wp-messages"></div>
+      <div class="wp-compose">
+        <textarea id="wp-input" rows="3" placeholder="작업 내용을 입력하세요. 예: 첨부한 RFP를 분석해 핵심 요구사항과 평가기준을 추출해줘."></textarea>
+        <div class="wp-compose-row">
+          <label class="chk"><input type="checkbox" id="wp-usewiki" checked /> 관련 GoldWiki 참조 주입</label>
+          <div class="spacer"></div>
+          <button id="wp-copy" class="btn ghost" title="실행 프롬프트 복사">프롬프트 복사</button>
+          <button id="wp-send" class="btn primary">전송</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- 토스트 -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- 마크다운 렌더러 (로컬 벤더링 — 오프라인 동작, 실패 시 최소 렌더 폴백) -->
+  <script src="vendor/marked.umd.js"></script>
+  <script src="vendor/purify.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
