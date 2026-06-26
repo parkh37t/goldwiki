@@ -25,11 +25,13 @@
         <button class="nav-item" data-view="goldwiki"><span>📘</span> Gold Wiki</button>
         <button class="nav-item" data-view="templates"><span>📄</span> 템플릿</button>
         <button class="nav-item" data-view="examples"><span>📦</span> 산출물 예시</button>
+        <button class="nav-item" data-view="deliverables"><span>🗂️</span> 내 산출물</button>
         <button class="nav-item" data-view="qa"><span>✅</span> 품질 검증</button>
         <button class="nav-item" data-view="settings"><span>⚙️</span> 설정</button>
       </nav>
       <div class="sidebar-foot">
         <div id="conn-state" class="conn-pill conn-off" title="API 연결 상태">● 프롬프트 모드</div>
+        <div id="user-state" class="user-state hidden"></div>
         <small>GoldWiki = 단일 진실 공급원</small>
       </div>
     </aside>
@@ -68,12 +70,29 @@
     </aside>
   </div>
 
+  <!-- 로그인 게이트 (Supabase 설정 시 표시) -->
+  <div id="auth-gate" class="auth-gate hidden">
+    <div class="auth-card">
+      <div class="auth-brand"><div class="brand-mark">CS</div><strong>ClubSchool AI OS</strong></div>
+      <p class="auth-sub">계속하려면 로그인하세요.</p>
+      <input id="auth-email" type="email" placeholder="이메일" autocomplete="username" />
+      <input id="auth-pass" type="password" placeholder="비밀번호" autocomplete="current-password" />
+      <div id="auth-msg" class="auth-msg"></div>
+      <div class="auth-actions">
+        <button id="auth-signin" class="btn primary">로그인</button>
+        <button id="auth-signup" class="btn">회원가입</button>
+      </div>
+      <button id="auth-skip" class="btn ghost auth-skip">로그인 없이 둘러보기</button>
+    </div>
+  </div>
+
   <!-- 토스트 -->
   <div id="toast" class="toast hidden"></div>
 
   <!-- 마크다운 렌더러 (로컬 벤더링 — 오프라인 동작, 실패 시 최소 렌더 폴백) -->
   <script src="vendor/marked.umd.js"></script>
   <script src="vendor/purify.min.js"></script>
+  <script src="supabase.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

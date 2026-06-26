@@ -92,8 +92,38 @@ language sql stable as $$
   limit match_count;
 $$;
 
--- (권장) RLS: 운영 배포 시 활성화하고 프로젝트 멤버십 기반 정책을 추가하라.
--- alter table projects      enable row level security;
--- alter table jobs          enable row level security;
--- alter table deliverables  enable row level security;
--- 예) create policy "project members read" on deliverables for select using (auth.uid() is not null);
+-- ===== RLS(행 수준 보안) — 브라우저가 사용자 JWT로 직접 접근하므로 반드시 활성화 =====
+-- 소유자(created_by) 기반 기본 정책. 팀 공유가 필요하면 멤버십 테이블로 확장하라.
+
+alter table projects      enable row level security;
+alter table jobs          enable row level security;
+alter table chat_messages enable row level security;
+alter table deliverables  enable row level security;
+alter table decisions     enable row level security;
+-- knowledge_chunks 는 service_role(서버 /api/embed,/api/rag)만 접근 → RLS 활성 + 정책 없음(차단)
+alter table knowledge_chunks enable row level security;
+
+-- projects: 본인이 만든 프로젝트만
+create policy "own projects" on projects
+  for all using (created_by = auth.uid()) with check (created_by = auth.uid());
+
+-- jobs: 본인 소유
+create policy "own jobs" on jobs
+  for all using (created_by = auth.uid()) with check (created_by = auth.uid());
+
+-- chat_messages: 본인 소유 job 의 메시지
+create policy "own messages" on chat_messages
+  for all using (exists (select 1 from jobs j where j.id = chat_messages.job_id and j.created_by = auth.uid()))
+  with check (exists (select 1 from jobs j where j.id = chat_messages.job_id and j.created_by = auth.uid()));
+
+-- deliverables: 본인 소유
+create policy "own deliverables" on deliverables
+  for all using (created_by = auth.uid()) with check (created_by = auth.uid());
+
+-- decisions: 로그인 사용자 읽기, 본인 프로젝트에 쓰기
+create policy "read decisions" on decisions for select using (auth.uid() is not null);
+create policy "write decisions" on decisions for insert
+  with check (exists (select 1 from projects p where p.id = decisions.project_id and p.created_by = auth.uid()));
+
+-- 참고: chat_messages/jobs/deliverables 에 created_by 가 필요. jobs/deliverables 는 이미 보유.
+-- chat_messages 는 job_id 로 소유권을 상속한다.

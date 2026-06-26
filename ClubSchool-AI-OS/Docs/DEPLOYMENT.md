@@ -20,8 +20,10 @@
 3. **Root Directory** 를 `ClubSchool-AI-OS` 로 지정(중요 — 이 폴더가 웹 루트가 된다).
 4. Framework Preset: **Other**(정적) — `vercel.json` 이 함수/리다이렉트를 자동 구성.
 5. **Environment Variables** 에 추가:
-   - `ANTHROPIC_API_KEY` = `sk-ant-...` (필수)
+   - `ANTHROPIC_API_KEY` = `sk-ant-...` (필수 — 에이전트 대화)
    - `CS_MODEL` = `claude-opus-4-8` (선택)
+   - (인증·저장) `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE`
+   - (자동 학습 RAG) `OPENAI_API_KEY` 또는 `VOYAGE_API_KEY`
 6. Deploy → `https://<프로젝트>.vercel.app/` 접속(자동으로 `/Console/` 로 이동).
 
 배포 후 콘솔 상단이 **● 서버 연결됨** 으로 표시되면 키 없이 누구나 에이전트와 대화할 수 있다.
@@ -31,10 +33,20 @@
 > 자동으로 서버 프록시 모드로 전환한다. `.claude/` 같은 dot-폴더는 정적으로 서빙되지 않으므로,
 > 에이전트/커맨드 본문은 `Console/manifest.json` 에 내장되어 정적 호스트에서도 동작한다.
 
-### Supabase 연결(선택, v2.0로 가는 길)
+### Supabase 연결 — 인증 + 영속화 + 자동 학습(구현됨)
 
-[supabase/README.md](../supabase/README.md) 참고. 인증·작업 이력·산출물 보관·자동 학습(RAG)을
-단계적으로 추가한다.
+1. [supabase.com](https://supabase.com) 프로젝트 생성 → SQL Editor 에 [`supabase/schema.sql`](../supabase/schema.sql) 실행(pgvector + RLS 포함).
+2. Vercel 환경변수에 `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE` 추가.
+3. 재배포 후 콘솔 접속 시 **로그인 게이트**가 나타난다(회원가입/로그인). 로그인하면:
+   - 대화가 `jobs`·`chat_messages` 에 저장된다.
+   - 응답 하단 **🗂️ 산출물로 저장** → `deliverables`(좌측 *내 산출물* 뷰에서 조회).
+   - 응답 하단 **🧠 지식으로 학습** → 임베딩 후 `knowledge_chunks`(승인 대기) 적재.
+4. **자동 학습 RAG**: `OPENAI_API_KEY`(또는 `VOYAGE_API_KEY`)를 추가하면, 대화 시 *관련 GoldWiki 참조 주입*
+   체크 상태에서 승인된 지식을 임베딩 검색해 컨텍스트로 주입한다(서버 `/api/rag`).
+   - 임베딩 차원은 schema 기본 1536(OpenAI text-embedding-3-small). Voyage 사용 시 차원을 맞춰라.
+   - 적재된 지식은 기본 `approved=false`. 운영에서는 검토 후 `approved=true`로 승격(휴먼 인 더 루프).
+
+자세한 데이터 모델·단계: [supabase/README.md](../supabase/README.md).
 
 ### 인증(공개 배포 시 필수 권장)
 

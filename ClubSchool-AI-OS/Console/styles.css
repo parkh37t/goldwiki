@@ -131,8 +131,32 @@ body{font-family:var(--sans);color:var(--ink);background:var(--bg);font-size:14p
 .qa-bar{flex:1;height:12px;background:#eef0f4;border-radius:999px;overflow:hidden}
 .qa-bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--ok))}
 
+/* 사용자 상태 */
+.user-state{font-size:11px;color:#aeb6c4;display:flex;align-items:center;gap:6px;justify-content:space-between}
+.user-state button{background:transparent;border:1px solid #3a414f;color:#cbd2de;border-radius:6px;font-size:10.5px;padding:2px 7px;cursor:pointer}
+.user-state button:hover{background:#262b37}
+
+/* 로그인 게이트 */
+.auth-gate{position:fixed;inset:0;background:linear-gradient(135deg,#14161a,#20242e);display:grid;place-items:center;z-index:80}
+.auth-card{background:var(--surface);border-radius:16px;padding:32px;width:360px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.auth-brand{display:flex;align-items:center;gap:10px;font-size:16px}
+.auth-sub{color:var(--muted);font-size:13px;margin:10px 0 18px}
+.auth-card input{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:9px;font-size:14px;margin-bottom:10px;font-family:inherit}
+.auth-msg{color:var(--err);font-size:12.5px;min-height:18px;margin-bottom:6px}
+.auth-actions{display:flex;gap:8px}
+.auth-actions .btn{flex:1;justify-content:center;text-align:center}
+.auth-skip{width:100%;margin-top:12px;color:var(--muted)}
+
+/* 산출물 보관함 */
+.dlv-list{display:flex;flex-direction:column;gap:10px;max-width:920px}
+.dlv-item{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;display:flex;gap:14px;align-items:center;box-shadow:var(--shadow)}
+.dlv-item .meta{flex:1;min-width:0}
+.dlv-item h3{margin:0 0 3px;font-size:14px}
+.dlv-item .sub{color:var(--muted);font-size:12px}
+.dlv-empty{color:var(--muted);background:var(--surface);border:1px dashed var(--line);border-radius:var(--radius);padding:28px;text-align:center}
+
 /* 토스트 */
-.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:999px;font-size:13px;box-shadow:var(--shadow);z-index:50}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:999px;font-size:13px;box-shadow:var(--shadow);z-index:90}
 
 /* 반응형 */
 @media (max-width:1100px){#app{grid-template-columns:64px 1fr}.brand-text,.nav-item span+*,.sidebar-foot small{display:none}.nav-item{justify-content:center}#app:has(.workpanel:not(.hidden)){grid-template-columns:64px 1fr 360px}}

@@ -86,6 +86,98 @@ def call_anthropic(payload):
         return 502, {"error": f"업스트림 호출 실패: {e}"}
 
 
+# ----- Supabase / 임베딩 (자동 학습·RAG) 헬퍼 -----
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")
+SUPABASE_SERVICE_ROLE = os.environ.get("SUPABASE_SERVICE_ROLE", "")
+EMBED_DIM = int(os.environ.get("CS_EMBED_DIM", "1536"))
+
+
+def _http_json(url, payload, headers, timeout=60):
+    req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"),
+                                 headers=headers, method="POST")
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return json.loads(r.read().decode("utf-8"))
+
+
+def embed_texts(texts):
+    """임베딩 제공자 호출. OPENAI_API_KEY(기본, 1536) 또는 VOYAGE_API_KEY 지원. (vectors, error)."""
+    openai = os.environ.get("OPENAI_API_KEY", "").strip()
+    voyage = os.environ.get("VOYAGE_API_KEY", "").strip()
+    try:
+        if openai:
+            d = _http_json("https://api.openai.com/v1/embeddings",
+                           {"input": texts, "model": os.environ.get("CS_EMBED_MODEL", "text-embedding-3-small")},
+                           {"content-type": "application/json", "Authorization": "Bearer " + openai})
+            return [x["embedding"] for x in d["data"]], None
+        if voyage:
+            d = _http_json("https://api.voyageai.com/v1/embeddings",
+                           {"input": texts, "model": os.environ.get("CS_EMBED_MODEL", "voyage-3")},
+                           {"content-type": "application/json", "Authorization": "Bearer " + voyage})
+            return [x["embedding"] for x in d["data"]], None
+        return None, "임베딩 제공자 미설정 (OPENAI_API_KEY 또는 VOYAGE_API_KEY 필요)"
+    except Exception as e:  # noqa
+        return None, f"임베딩 호출 실패: {e}"
+
+
+def _chunk(text, size=1500):
+    text = (text or "").strip()
+    return [text[i:i + size] for i in range(0, len(text), size)] or [text]
+
+
+def supa_insert(table, rows):
+    if not (SUPABASE_URL and SUPABASE_SERVICE_ROLE):
+        return None, "Supabase 미설정 (SUPABASE_URL / SUPABASE_SERVICE_ROLE)"
+    try:
+        _http_json(f"{SUPABASE_URL}/rest/v1/{table}", rows,
+                   {"content-type": "application/json", "apikey": SUPABASE_SERVICE_ROLE,
+                    "Authorization": "Bearer " + SUPABASE_SERVICE_ROLE, "Prefer": "return=minimal"})
+        return True, None
+    except Exception as e:  # noqa
+        return None, f"Supabase insert 실패: {e}"
+
+
+def supa_rpc(fn, args):
+    if not (SUPABASE_URL and SUPABASE_SERVICE_ROLE):
+        return None, "Supabase 미설정"
+    try:
+        return _http_json(f"{SUPABASE_URL}/rest/v1/rpc/{fn}", args,
+                          {"content-type": "application/json", "apikey": SUPABASE_SERVICE_ROLE,
+                           "Authorization": "Bearer " + SUPABASE_SERVICE_ROLE}), None
+    except Exception as e:  # noqa
+        return None, f"Supabase rpc 실패: {e}"
+
+
+def do_embed(payload):
+    text = payload.get("text", "")
+    if not text.strip():
+        return 400, {"error": "text가 필요합니다."}
+    chunks = _chunk(text)
+    vecs, err = embed_texts(chunks)
+    if err:
+        return 503, {"error": err}
+    rows = [{"source_path": payload.get("source_path"), "topic": payload.get("topic"),
+             "content": c, "embedding": v, "approved": False} for c, v in zip(chunks, vecs)]
+    ok, err = supa_insert("knowledge_chunks", rows)
+    if err:
+        return 503, {"error": err}
+    return 200, {"ok": True, "chunks": len(rows)}
+
+
+def do_rag(payload):
+    query = payload.get("query", "")
+    if not query.strip():
+        return 400, {"error": "query가 필요합니다."}
+    if not (SUPABASE_URL and SUPABASE_SERVICE_ROLE):
+        return 200, {"chunks": []}  # 미설정 시 조용히 빈 결과
+    vecs, err = embed_texts([query])
+    if err:
+        return 200, {"chunks": [], "note": err}
+    res, err = supa_rpc("match_knowledge", {"query_embedding": vecs[0], "match_count": int(payload.get("k", 6))})
+    if err:
+        return 200, {"chunks": [], "note": err}
+    return 200, {"chunks": res or []}
+
+
 class Handler(SimpleHTTPRequestHandler):
     """정적 서빙(ROOT 기준) + /api/* 라우팅."""
 
@@ -124,16 +216,27 @@ class Handler(SimpleHTTPRequestHandler):
                 with open(mpath, encoding="utf-8") as f:
                     return self._send_json(200, json.load(f))
             return self._send_json(404, {"error": "manifest 없음"})
+        if self.path == "/api/config":
+            return self._send_json(200, {
+                "supabaseUrl": os.environ.get("SUPABASE_URL", ""),
+                "supabaseAnonKey": os.environ.get("SUPABASE_ANON_KEY", ""),
+                "ragEnabled": bool((os.environ.get("OPENAI_API_KEY") or os.environ.get("VOYAGE_API_KEY"))
+                                   and os.environ.get("SUPABASE_SERVICE_ROLE")),
+            })
         return self._send_json(404, {"error": "알 수 없는 API"})
 
     def do_POST(self):
-        if self.path != "/api/chat":
+        if self.path not in ("/api/chat", "/api/embed", "/api/rag"):
             return self._send_json(404, {"error": "알 수 없는 API"})
         try:
             length = int(self.headers.get("Content-Length", 0))
             payload = json.loads(self.rfile.read(length).decode("utf-8")) if length else {}
         except Exception as e:  # noqa
             return self._send_json(400, {"error": f"잘못된 요청 본문: {e}"})
+        if self.path == "/api/embed":
+            return self._send_json(*do_embed(payload))
+        if self.path == "/api/rag":
+            return self._send_json(*do_rag(payload))
         if not isinstance(payload.get("messages"), list) or not payload["messages"]:
             return self._send_json(400, {"error": "messages 배열이 필요합니다."})
         code, obj = call_anthropic(payload)

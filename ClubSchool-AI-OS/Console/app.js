@@ -12,6 +12,8 @@ const S = {
   active: null,        // 현재 작업 패널 컨텍스트 {kind, name, systemPrompt, path}
   chat: [],            // {role, content}
   backend: null,       // /api/health 결과 (서버 모드면 객체, 아니면 null)
+  config: null,        // /api/config (Supabase 공개 설정)
+  user: null,          // 로그인 사용자
 };
 
 /* ---------- 유틸 ---------- */
@@ -66,9 +68,59 @@ async function boot() {
   }
   $('#version-tag').textContent = '콘솔 · ' + (S.manifest.product || 'ClubSchool AI OS');
   wireChrome();
+  await initAuth();
   refreshConn();
+  refreshUser();
   go('dashboard');
 }
+
+/* ---------- 인증(Supabase, 선택) ---------- */
+async function initAuth() {
+  // 공개 설정 로드 (서버가 Supabase 설정을 노출하면 인증 활성)
+  try {
+    const r = await fetch('/api/config', { cache: 'no-store' });
+    if (r.ok) {
+      const c = await r.json();
+      if (c && c.supabaseUrl && c.supabaseAnonKey) {
+        S.config = c; CSDB.configure(c.supabaseUrl, c.supabaseAnonKey);
+        S.user = CSDB.user();
+      }
+    }
+  } catch { /* 설정 없음 — 인증 비활성 */ }
+  wireAuth();
+  if (CSDB.cfg().enabled && !S.user && !sessionStorage.getItem('cs.skipAuth')) showAuthGate(true);
+}
+function wireAuth() {
+  const gate = $('#auth-gate');
+  $('#auth-signin').onclick = () => doAuth('in');
+  $('#auth-signup').onclick = () => doAuth('up');
+  $('#auth-skip').onclick = () => { sessionStorage.setItem('cs.skipAuth', '1'); showAuthGate(false); toast('읽기 전용으로 둘러봅니다. 저장 기능은 로그인 후 사용하세요.'); };
+  $('#auth-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doAuth('in'); });
+}
+function showAuthGate(on) { $('#auth-gate').classList.toggle('hidden', !on); }
+async function doAuth(kind) {
+  const email = $('#auth-email').value.trim(), pass = $('#auth-pass').value;
+  const msg = $('#auth-msg'); msg.textContent = '';
+  if (!email || !pass) { msg.textContent = '이메일과 비밀번호를 입력하세요.'; return; }
+  try {
+    if (kind === 'up') {
+      const d = await CSDB.signUp(email, pass);
+      if (!d.access_token) { msg.style.color = 'var(--ok)'; msg.textContent = '가입 완료. 이메일 확인 후 로그인하세요.'; return; }
+    } else { await CSDB.signIn(email, pass); }
+    S.user = CSDB.user(); showAuthGate(false); refreshUser(); refreshConn();
+    toast('로그인되었습니다: ' + (S.user && S.user.email || ''));
+    go(S.view);
+  } catch (e) { msg.style.color = 'var(--err)'; msg.textContent = '실패: ' + e.message; }
+}
+function refreshUser() {
+  const el = $('#user-state');
+  if (S.user) {
+    el.classList.remove('hidden');
+    el.innerHTML = `<span title="${esc(S.user.email || '')}">👤 ${esc((S.user.email || '사용자').split('@')[0])}</span><button id="btn-logout">로그아웃</button>`;
+    $('#btn-logout').onclick = async () => { await CSDB.signOut(); S.user = null; refreshUser(); refreshConn(); toast('로그아웃되었습니다.'); if (CSDB.cfg().enabled) showAuthGate(true); };
+  } else { el.classList.add('hidden'); el.innerHTML = ''; }
+}
+function loggedIn() { return CSDB.cfg().enabled && !!S.user; }
 
 function errorBox(html) {
   return `<div class="form" style="border-color:var(--err)"><h2 style="margin-top:0;color:var(--err)">오류</h2><p>${html}</p></div>`;
@@ -92,7 +144,8 @@ function go(view) {
   $$('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.view === view));
   const V = $('#view');
   ({ dashboard: viewDashboard, agents: viewAgents, commands: viewCommands, workflows: viewWorkflows,
-     goldwiki: viewGoldwiki, templates: viewTemplates, examples: viewExamples, qa: viewQA, settings: viewSettings }[view] || viewDashboard)(V);
+     goldwiki: viewGoldwiki, templates: viewTemplates, examples: viewExamples, deliverables: viewDeliverables,
+     qa: viewQA, settings: viewSettings }[view] || viewDashboard)(V);
 }
 
 function chatMode() {
@@ -348,6 +401,83 @@ function viewSettings(V) {
   $('#set-clear').onclick = () => { S.settings.apiKey = ''; saveSettings(S.settings); refreshConn(); $('#set-key').value = ''; toast('API 키를 삭제했습니다.'); };
 }
 
+/* ---------- 영속화(Supabase) ---------- */
+async function dbEnsureJob() {
+  if (!loggedIn() || !S.active) return null;
+  if (S.active.jobId) return S.active.jobId;
+  try {
+    const row = await CSDB.insert('jobs', {
+      agent: S.active.kind === 'agent' ? S.active.name : (S.active.name || 'orchestrator'),
+      command: S.active.kind === 'command' ? S.active.name : null,
+      status: 'running', created_by: S.user.id,
+    });
+    S.active.jobId = row && row.id; return S.active.jobId;
+  } catch (e) { console.warn('job 생성 실패', e); return null; }
+}
+async function dbSaveMessage(role, content) {
+  if (!loggedIn() || !S.active || !S.active.jobId) return;
+  try { await CSDB.insert('chat_messages', { job_id: S.active.jobId, role, content }); }
+  catch (e) { console.warn('message 저장 실패', e); }
+}
+async function dbSaveDeliverable(title, content) {
+  if (!loggedIn()) { toast('산출물 저장은 로그인 후 가능합니다.'); return; }
+  try {
+    await CSDB.insert('deliverables', {
+      job_id: S.active && S.active.jobId || null, title,
+      kind: S.active && S.active.kind === 'command' ? S.active.name.replace('/', '') : 'note',
+      content_md: content, created_by: S.user.id,
+    });
+    toast('산출물 보관함에 저장했습니다.');
+  } catch (e) { toast('저장 실패: ' + e.message); }
+}
+async function dbLearn(content, sourcePath) {
+  // 자동 학습: 서버 임베딩 → knowledge_chunks(승인 대기) 적재
+  try {
+    const r = await fetch('/api/embed', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ text: content, source_path: sourcePath || (S.active && S.active.name) || 'console', topic: S.active && S.active.kind === 'agent' ? S.active.name : null }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+    toast(`지식 베이스에 적재됨(승인 대기, ${d.chunks || 1}청크). 자동 학습 RAG에 반영됩니다.`);
+  } catch (e) { toast('학습 적재 실패: ' + e.message); }
+}
+async function ragSearch(query) {
+  // 서버 RAG: 임베딩+match_knowledge. 미설정 시 빈 배열.
+  try {
+    const r = await fetch('/api/rag', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ query, k: 6 }),
+    });
+    if (!r.ok) return [];
+    const d = await r.json().catch(() => ({}));
+    return Array.isArray(d.chunks) ? d.chunks : [];
+  } catch { return []; }
+}
+
+/* ---------- 내 산출물 ---------- */
+async function viewDeliverables(V) {
+  V.innerHTML = `<div class="page-head"><h1>내 산출물</h1><p>대화에서 저장한 산출물 보관함입니다. ${loggedIn() ? '' : '(저장/조회는 로그인 필요)'}</p></div><div id="dlv-host"></div>`;
+  const host = $('#dlv-host');
+  if (!CSDB.cfg().enabled) { host.innerHTML = `<div class="dlv-empty">Supabase가 연결되지 않았습니다. <br>배포 시 <code>SUPABASE_URL</code>/<code>SUPABASE_ANON_KEY</code>를 설정하면 산출물·대화가 영속 저장됩니다. (<a href="../supabase/README.md">설정 가이드</a>)</div>`; return; }
+  if (!loggedIn()) { host.innerHTML = `<div class="dlv-empty">로그인하면 저장한 산출물을 볼 수 있습니다. <br><button class="btn primary" id="dlv-login">로그인</button></div>`; $('#dlv-login').onclick = () => showAuthGate(true); return; }
+  host.innerHTML = `<div class="dlv-empty">불러오는 중…</div>`;
+  try {
+    const rows = await CSDB.select('deliverables', 'select=id,title,kind,created_at,content_md&order=created_at.desc&limit=100');
+    if (!rows.length) { host.innerHTML = `<div class="dlv-empty">아직 저장된 산출물이 없습니다. 에이전트 대화에서 응답을 <b>산출물로 저장</b>해 보세요.</div>`; return; }
+    const list = document.createElement('div'); list.className = 'dlv-list';
+    rows.forEach(r => {
+      const it = document.createElement('div'); it.className = 'dlv-item';
+      it.innerHTML = `<div class="meta"><h3>${esc(r.title)}</h3><div class="sub">${esc(r.kind || 'note')} · ${new Date(r.created_at).toLocaleString('ko-KR')}</div></div>
+        <button class="btn ghost" data-act="view">보기</button><button class="btn ghost" data-act="dl">다운로드</button>`;
+      it.querySelector('[data-act="view"]').onclick = () => { const V2 = $('#view'); V2.innerHTML = `<div class="page-head"><h1>${esc(r.title)}</h1><button class="btn ghost" id="dlv-back">← 보관함</button></div><div class="doc"><div class="md">${renderMd(r.content_md)}</div></div>`; $('#dlv-back').onclick = () => go('deliverables'); };
+      it.querySelector('[data-act="dl"]').onclick = () => download((r.title || 'deliverable').replace(/\s+/g, '_') + '.md', r.content_md);
+      list.appendChild(it);
+    });
+    host.innerHTML = ''; host.appendChild(list);
+  } catch (e) { host.innerHTML = errorBox('산출물을 불러오지 못했습니다: ' + esc(e.message)); }
+}
+
 /* ---------- 작업 패널(대화/실행) ---------- */
 function openPanel(title, sub) {
   $('#wp-title').textContent = title;
@@ -408,14 +538,45 @@ async function sendMessage() {
     pushSys('실행 프롬프트를 클립보드에 복사했습니다. Claude Code/claude.ai 에 붙여넣어 실행하세요. (서버에 API 키를 설정하거나 콘솔 설정에 키를 넣으면 여기서 바로 대화합니다.)');
     return;
   }
+
+  await dbEnsureJob();
+  await dbSaveMessage('user', text);
+
+  // 자동 학습 RAG: 승인된 지식에서 관련 컨텍스트 주입
+  let augmented = text;
+  if ($('#wp-usewiki').checked) {
+    const chunks = await ragSearch(text);
+    if (chunks.length) {
+      const ctx = chunks.map((c, i) => `[${i + 1}] (${c.source_path || c.topic || '지식'}) ${c.content}`).join('\n\n');
+      augmented = `[자동 학습 지식 — 관련 컨텍스트]\n${ctx}\n\n[요청]\n${text}`;
+      pushSys(`자동 학습 지식 ${chunks.length}건을 컨텍스트로 주입했습니다.`);
+    }
+  }
+
   const loading = addMsg('bot', '_생각 중…_');
   try {
-    const reply = (mode === 'server') ? await callBackend(text) : await callAnthropicDirect(text);
+    const reply = (mode === 'server') ? await callBackend(augmented) : await callAnthropicDirect(augmented);
     loading.querySelector('.md').innerHTML = renderMd(reply);
     S.chat[S.chat.length - 1].content = reply;
+    addBotActions(loading, reply, text);
+    await dbSaveMessage('assistant', reply);
   } catch (e) {
     loading.querySelector('.md').innerHTML = renderMd('⚠️ 호출 실패: ' + e.message + '\n\n키/모델/네트워크를 확인하세요.');
   }
+}
+
+/* 응답 하단 액션: 산출물 저장 / 지식으로 학습 / 복사 */
+function addBotActions(msgEl, reply, srcTitle) {
+  const bar = document.createElement('div');
+  bar.style.cssText = 'display:flex;gap:6px;margin-top:8px;flex-wrap:wrap';
+  const mk = (label, fn) => { const b = document.createElement('button'); b.className = 'btn ghost'; b.style.cssText = 'font-size:11.5px;padding:5px 9px'; b.textContent = label; b.onclick = fn; return b; };
+  bar.appendChild(mk('📋 복사', () => { navigator.clipboard.writeText(reply); toast('복사했습니다.'); }));
+  if (loggedIn()) {
+    const title = (S.active && S.active.name ? S.active.name + ' — ' : '') + (srcTitle || '산출물').slice(0, 40);
+    bar.appendChild(mk('🗂️ 산출물로 저장', () => dbSaveDeliverable(title, reply)));
+    bar.appendChild(mk('🧠 지식으로 학습', () => dbLearn(reply, S.active && S.active.name)));
+  }
+  msgEl.appendChild(bar);
 }
 
 function buildSystemAndHistory(userText) {
