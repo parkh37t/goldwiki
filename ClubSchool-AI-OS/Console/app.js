@@ -176,6 +176,7 @@ function wireChrome() {
   $('#wp-input').addEventListener('keydown', e => {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) sendMessage();
   });
+  document.addEventListener('click', onDocLinkClick); // 내부 .md 링크 가로채기
 }
 
 function go(view) {
@@ -339,9 +340,59 @@ async function openWikiDoc(path) {
   try {
     const t = await fetchText(path);
     host.innerHTML = `<div class="doc-toolbar"><span class="doc-path">${esc(path)}</span><div style="flex:1"></div>
-      <button class="btn ghost" id="dv-copy">원문 복사</button></div><div class="md">${renderMd(t)}</div>`;
+      <button class="btn ghost" id="dv-copy">원문 복사</button></div><div class="md" data-base="${esc(path)}">${renderMd(t)}</div>`;
     $('#dv-copy').onclick = () => { navigator.clipboard.writeText(t); toast('원문을 복사했습니다.'); };
   } catch (e) { host.innerHTML = errorBox('문서를 불러오지 못했습니다: ' + esc(e.message)); }
+}
+
+/* 렌더된 마크다운 내부의 .md 링크를 브라우저 이동(404) 대신 콘솔 안에서 열기 */
+function resolveRel(basePath, href) {
+  href = (href || '').split('#')[0];
+  if (!href) return basePath;
+  if (href.startsWith('/')) return href.replace(/^\/+/, '');
+  const baseDir = basePath && basePath.includes('/') ? basePath.slice(0, basePath.lastIndexOf('/')) : '';
+  const parts = baseDir ? baseDir.split('/') : [];
+  href.split('/').forEach(seg => {
+    if (seg === '..') parts.pop();
+    else if (seg && seg !== '.') parts.push(seg);
+  });
+  return parts.join('/');
+}
+function onDocLinkClick(e) {
+  const a = e.target.closest && e.target.closest('a');
+  if (!a) return;
+  const href = a.getAttribute('href') || '';
+  if (/^(https?:|mailto:|tel:|#)/i.test(href)) return;     // 외부/앵커는 그대로
+  if (!/\.md($|[?#])/i.test(href)) return;                  // .md 링크만 가로채기
+  const md = a.closest('.md');
+  if (!md) return;
+  e.preventDefault();
+  const target = resolveRel(md.getAttribute('data-base') || '', href);
+  openAnyDoc(target);
+}
+async function openAnyDoc(path, title) {
+  const back = S.view;
+  const V = $('#view');
+  V.innerHTML = `<div class="page-head"><h1>${esc(title || path.split('/').pop())}</h1></div>
+    <div class="doc"><div class="doc-toolbar"><span class="doc-path">${esc(path)}</span><div style="flex:1"></div>
+      <button class="btn ghost" id="any-back">← 돌아가기</button>
+      <button class="btn ghost" id="any-copy">원문 복사</button></div>
+      <div class="md" id="any-body" data-base="${esc(path)}"><p style="color:var(--muted)">불러오는 중…</p></div></div>`;
+  $('#any-back').onclick = () => go(back);
+  try {
+    let t = null;
+    // .claude/agents·commands 는 정적 호스트에서 서빙 안 되므로 manifest 내장본 사용
+    const am = path.match(/\.claude\/agents\/([^/]+)\.md$/);
+    const cm = path.match(/\.claude\/commands\/([^/]+)\.md$/);
+    if (am) { const a = S.manifest.agents.find(x => x.path === path || x.name === am[1]); if (a && a.systemPrompt) t = '# ' + a.name + '\n\n' + a.systemPrompt; }
+    else if (cm) { const c = S.manifest.commands.find(x => x.path === path); if (c && c.body) t = '# ' + c.name + '\n\n' + c.body; }
+    if (t == null) t = await fetchText(path);
+    $('#any-body').innerHTML = renderMd(t);
+    const txt = t;
+    $('#any-copy').onclick = () => { navigator.clipboard.writeText(txt); toast('원문을 복사했습니다.'); };
+  } catch (e) {
+    $('#any-body').innerHTML = errorBox('이 문서는 콘솔에서 열 수 없습니다(비공개 경로이거나 정적 호스트에서 서빙되지 않음):<br><code>' + esc(path) + '</code>');
+  }
 }
 
 /* 단일 문서 모달 대용 — 전체 뷰로 표시 */
@@ -352,7 +403,7 @@ async function openDoc(path, title) {
       <button class="btn ghost" id="dv-back">← 목록</button>
       <button class="btn ghost" id="dv-copy">원문 복사</button>
       <button class="btn" id="dv-tpl">작업으로 보내기</button></div>
-    <div class="md" id="dv-body"><p style="color:var(--muted)">불러오는 중…</p></div></div>`;
+    <div class="md" id="dv-body" data-base="${esc(path)}"><p style="color:var(--muted)">불러오는 중…</p></div></div>`;
   $('#dv-back').onclick = () => go(S.view);
   try {
     const t = await fetchText(path);
@@ -600,8 +651,20 @@ async function sendMessage() {
     addBotActions(loading, reply, text);
     await dbSaveMessage('assistant', reply);
   } catch (e) {
-    loading.querySelector('.md').innerHTML = renderMd('⚠️ 호출 실패: ' + e.message + '\n\n키/모델/네트워크를 확인하세요.');
+    loading.querySelector('.md').innerHTML = renderMd('⚠️ ' + chatError(e.message));
   }
+}
+function chatError(raw) {
+  const m = (raw || '').toLowerCase();
+  if (m.includes('invalid x-api-key') || m.includes('authentication_error') || m.includes('401'))
+    return '**Anthropic(Claude) API 키가 유효하지 않습니다.** Vercel 환경변수 `ANTHROPIC_API_KEY` 를 실제 Claude API 키로 설정한 뒤 **Redeploy** 하세요.\n\n키 발급: console.anthropic.com → API Keys. (`sk-ant-`로 시작)';
+  if (m.includes('credit') || m.includes('quota') || m.includes('billing'))
+    return 'Anthropic 크레딧/결제 한도 문제입니다. console.anthropic.com 의 Billing을 확인하세요.';
+  if (m.includes('overloaded') || m.includes('529'))
+    return '모델이 일시적으로 혼잡합니다. 잠시 후 다시 시도하세요.';
+  if (m.includes('rate') || m.includes('429'))
+    return '요청이 많아 잠시 제한되었습니다. 잠시 후 다시 시도하세요.';
+  return '호출 실패: ' + raw + '\n\n키/모델/네트워크를 확인하세요.';
 }
 
 /* 응답 하단 액션: 산출물 저장 / 지식으로 학습 / 복사 */
