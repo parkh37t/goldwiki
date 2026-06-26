@@ -48,10 +48,13 @@ create table if not exists deliverables (
   kind         text,                         -- proposal|wbs|ia|ui|qa-report ...
   content_md   text not null,                -- 마크다운 본문
   qa_passed    boolean default false,
+  created_by   uuid,                          -- auth.users.id (소유자, RLS 기준)
   approved_by  uuid,
   version      int not null default 1,
   created_at   timestamptz not null default now()
 );
+-- 이미 생성된 테이블 보정(부분 실행 후 재실행 안전)
+alter table deliverables add column if not exists created_by uuid;
 
 -- 의사결정 로그(ADR) — GoldWiki/Foundation/DecisionLog 의 영속화
 create table if not exists decisions (
@@ -104,24 +107,30 @@ alter table decisions     enable row level security;
 alter table knowledge_chunks enable row level security;
 
 -- projects: 본인이 만든 프로젝트만
+drop policy if exists "own projects" on projects;
 create policy "own projects" on projects
   for all using (created_by = auth.uid()) with check (created_by = auth.uid());
 
 -- jobs: 본인 소유
+drop policy if exists "own jobs" on jobs;
 create policy "own jobs" on jobs
   for all using (created_by = auth.uid()) with check (created_by = auth.uid());
 
 -- chat_messages: 본인 소유 job 의 메시지
+drop policy if exists "own messages" on chat_messages;
 create policy "own messages" on chat_messages
   for all using (exists (select 1 from jobs j where j.id = chat_messages.job_id and j.created_by = auth.uid()))
   with check (exists (select 1 from jobs j where j.id = chat_messages.job_id and j.created_by = auth.uid()));
 
 -- deliverables: 본인 소유
+drop policy if exists "own deliverables" on deliverables;
 create policy "own deliverables" on deliverables
   for all using (created_by = auth.uid()) with check (created_by = auth.uid());
 
 -- decisions: 로그인 사용자 읽기, 본인 프로젝트에 쓰기
+drop policy if exists "read decisions" on decisions;
 create policy "read decisions" on decisions for select using (auth.uid() is not null);
+drop policy if exists "write decisions" on decisions;
 create policy "write decisions" on decisions for insert
   with check (exists (select 1 from projects p where p.id = decisions.project_id and p.created_by = auth.uid()));
 
