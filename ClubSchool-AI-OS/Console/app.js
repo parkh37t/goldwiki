@@ -166,9 +166,11 @@ function errorBox(html) {
 }
 
 function wireChrome() {
-  $$('.nav-item').forEach(b => b.onclick = () => go(b.dataset.view));
-  $('#btn-settings').onclick = () => go('settings');
+  $$('.nav-item').forEach(b => b.onclick = () => { go(b.dataset.view); closeDrawer(); });
+  $('#btn-settings').onclick = () => { go('settings'); closeDrawer(); };
   $('#btn-quickstart').onclick = quickStart;
+  $('#btn-menu').onclick = toggleDrawer;
+  $('#scrim').onclick = closeDrawer;
   $('#wp-close').onclick = closePanel;
   $('#wp-send').onclick = sendMessage;
   $('#wp-copy').onclick = copyPrompt;
@@ -176,8 +178,14 @@ function wireChrome() {
   $('#wp-input').addEventListener('keydown', e => {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) sendMessage();
   });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
   document.addEventListener('click', onDocLinkClick); // 내부 .md 링크 가로채기
 }
+
+/* 모바일 드로어(사이드바) 토글 */
+function openDrawer() { document.querySelector('.sidebar').classList.add('open'); $('#scrim').classList.remove('hidden'); }
+function closeDrawer() { document.querySelector('.sidebar').classList.remove('open'); $('#scrim').classList.add('hidden'); }
+function toggleDrawer() { document.querySelector('.sidebar').classList.contains('open') ? closeDrawer() : openDrawer(); }
 
 function go(view) {
   S.view = view;
