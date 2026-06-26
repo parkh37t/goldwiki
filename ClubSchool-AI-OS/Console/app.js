@@ -934,7 +934,7 @@ function addBotActions(msgEl, reply, srcTitle) {
     bar.appendChild(mk('🧠 지식으로 학습', () => dbLearn(reply, S.active && S.active.name)));
   }
   msgEl.appendChild(bar);
-  const exp = exportBar(title, reply, ['pptx', 'doc', 'xlsx', 'pdf']);
+  const exp = exportBar(title, reply, ['pptx', 'doc', 'xlsx', 'pdf', 'design']);
   exp.style.marginTop = '6px'; msgEl.appendChild(exp);
 }
 
