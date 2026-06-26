@@ -197,19 +197,23 @@ function go(view) {
 }
 
 function chatMode() {
+  // 'prompt'  : 무API — 실행 프롬프트 복사 (기본값, 과금 전혀 없음)
   // 'ollama'  : 로컬 Ollama (무료, 내 PC) — 사용자가 명시 선택
-  // 'server'  : 백엔드 프록시 사용 (서버에 키 있음)
+  // 'server'  : 백엔드 프록시 사용 (서버에 키 있음) — 'auto' 선택 시에만
   // 'direct'  : 브라우저에서 직접 Anthropic 호출 (콘솔 설정에 키 있음)
-  // 'prompt'  : 엔진 없음 → 실행 프롬프트 복사
-  if (S.settings.engine === 'ollama' && (S.settings.ollamaUrl || '').trim()) return 'ollama';
-  if (S.backend && S.backend.hasKey) return 'server';
-  if (S.settings.apiKey) return 'direct';
+  const e = S.settings.engine || 'prompt';   // 기본: 무API (사용자 요청)
+  if (e === 'ollama') return (S.settings.ollamaUrl || '').trim() ? 'ollama' : 'prompt';
+  if (e === 'direct') return S.settings.apiKey ? 'direct' : 'prompt';
+  if (e === 'auto') {                          // 사용자가 명시적으로 'API 자동'을 선택했을 때만 과금 경로
+    if (S.backend && S.backend.hasKey) return 'server';
+    if (S.settings.apiKey) return 'direct';
+  }
   return 'prompt';
 }
 function refreshConn() {
   const mode = chatMode();
   const el = $('#conn-state');
-  const label = { ollama: '● 로컬 Ollama', server: '● 서버 연결됨', direct: '● API 연결됨', prompt: '● 프롬프트 모드' }[mode];
+  const label = { ollama: '● 로컬 Ollama', server: '● 서버 연결됨', direct: '● API 연결됨', prompt: '● 무API 모드' }[mode];
   el.textContent = label;
   el.className = 'conn-pill ' + (mode === 'prompt' ? 'conn-off' : 'conn-on');
 }
@@ -331,7 +335,7 @@ function plRun() {
   $('#pl-auto').onclick = () => {
     const rfp = $('#pl-rfp').value.trim();
     if (!rfp) { toast('RFP 내용을 붙여넣으세요.'); return; }
-    if (chatMode() === 'prompt') { toast('자동 실행 엔진이 없습니다. 설정 → 로컬 Ollama를 켜주세요.'); go('settings'); return; }
+    if (chatMode() === 'prompt') { toast('브라우저 자동 실행은 LLM 엔진이 필요합니다. 무API라면 왼쪽 "프롬프트 복사"로 실행하세요. (설정에서 Ollama/서버 선택 시 자동 실행)'); return; }
     plAutoRun(rfp);
   };
 }
@@ -687,9 +691,11 @@ function viewSettings(V) {
   <div class="form">
     <label>응답 엔진 <span class="hint">에이전트 대화·자동 파이프라인을 무엇으로 구동할지</span></label>
     <select id="set-engine">
-      <option value="auto" ${s.engine !== 'ollama' ? 'selected' : ''}>자동 (서버 키 / 내 API 키)</option>
-      <option value="ollama" ${s.engine === 'ollama' ? 'selected' : ''}>🟢 로컬 Ollama (무료 · 내 PC · API 과금 없음)</option>
+      <option value="prompt" ${(s.engine || 'prompt') === 'prompt' ? 'selected' : ''}>🆓 무API · 프롬프트 복사 (기본 · 과금 전혀 없음)</option>
+      <option value="ollama" ${s.engine === 'ollama' ? 'selected' : ''}>🟢 로컬 Ollama (무료 · 내 PC · 모바일은 불가)</option>
+      <option value="auto" ${s.engine === 'auto' ? 'selected' : ''}>☁️ 서버/내 API 자동 (유료 · 사용량 한도 있음)</option>
     </select>
+    <div class="hint" style="margin-top:6px">기본은 <b>무API</b>입니다. "전송"을 누르면 완성된 실행 프롬프트가 복사되어, <a href="https://claude.ai" target="_blank">claude.ai</a> 등 무료 AI에 붙여넣어 바로 실행할 수 있습니다. API 과금이 전혀 없습니다.</div>
 
     <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;margin:14px 0">
       <label style="margin-top:0">로컬 Ollama 주소</label>
@@ -966,10 +972,11 @@ async function callAnthropicRaw(system, history) {
 }
 function chatError(raw) {
   const m = (raw || '').toLowerCase();
+  const noApiTip = '\n\n💡 **API 없이 쓰려면** 설정 → 응답 엔진 → **🆓 무API · 프롬프트 복사**를 선택하세요. 과금이 전혀 없습니다.';
   if (m.includes('invalid x-api-key') || m.includes('authentication_error') || m.includes('401'))
-    return '**Anthropic(Claude) API 키가 유효하지 않습니다.** Vercel 환경변수 `ANTHROPIC_API_KEY` 를 실제 Claude API 키로 설정한 뒤 **Redeploy** 하세요.\n\n키 발급: console.anthropic.com → API Keys. (`sk-ant-`로 시작)';
-  if (m.includes('credit') || m.includes('quota') || m.includes('billing'))
-    return 'Anthropic 크레딧/결제 한도 문제입니다. console.anthropic.com 의 Billing을 확인하세요.';
+    return '**서버 API 키가 유효하지 않습니다.** 이 사이트는 API 없이도 쓸 수 있습니다.' + noApiTip;
+  if (m.includes('usage limit') || m.includes('credit') || m.includes('quota') || m.includes('billing'))
+    return '**서버 API 사용량 한도에 도달했습니다.** 이 사이트는 API 없이도 쓸 수 있습니다.' + noApiTip;
   if (m.includes('overloaded') || m.includes('529'))
     return '모델이 일시적으로 혼잡합니다. 잠시 후 다시 시도하세요.';
   if (m.includes('rate') || m.includes('429'))
