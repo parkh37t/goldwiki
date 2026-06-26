@@ -218,8 +218,8 @@ class Handler(SimpleHTTPRequestHandler):
             return self._send_json(404, {"error": "manifest 없음"})
         if self.path == "/api/config":
             return self._send_json(200, {
-                "supabaseUrl": os.environ.get("SUPABASE_URL", ""),
-                "supabaseAnonKey": os.environ.get("SUPABASE_ANON_KEY", ""),
+                "supabaseUrl": os.environ.get("SUPABASE_URL", "").strip(),
+                "supabaseAnonKey": os.environ.get("SUPABASE_ANON_KEY", "").strip(),
                 "ragEnabled": bool((os.environ.get("OPENAI_API_KEY") or os.environ.get("VOYAGE_API_KEY"))
                                    and os.environ.get("SUPABASE_SERVICE_ROLE")),
             })

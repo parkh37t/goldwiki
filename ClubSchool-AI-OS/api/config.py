@@ -7,8 +7,8 @@ from http.server import BaseHTTPRequestHandler
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
         body = json.dumps({
-            "supabaseUrl": os.environ.get("SUPABASE_URL", ""),
-            "supabaseAnonKey": os.environ.get("SUPABASE_ANON_KEY", ""),
+            "supabaseUrl": os.environ.get("SUPABASE_URL", "").strip(),
+            "supabaseAnonKey": os.environ.get("SUPABASE_ANON_KEY", "").strip(),
             "ragEnabled": bool((os.environ.get("OPENAI_API_KEY") or os.environ.get("VOYAGE_API_KEY"))
                                and os.environ.get("SUPABASE_SERVICE_ROLE")),
         }, ensure_ascii=False).encode("utf-8")

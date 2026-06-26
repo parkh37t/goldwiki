@@ -11,7 +11,13 @@ const CSDB = (() => {
   const SK = 'cs.session';
 
   const cfg = () => ({ url: URL_, anon: ANON, enabled: !!(URL_ && ANON) });
-  function configure(url, anon) { URL_ = (url || '').replace(/\/$/, ''); ANON = anon || ''; }
+  const clean = (s) => (s || '').trim().replace(/^["']|["']$/g, '').trim();
+  function configure(url, anon) {
+    URL_ = clean(url).replace(/\/+$/, '');
+    if (URL_ && !/^https?:\/\//i.test(URL_)) URL_ = 'https://' + URL_; // 스킴 누락 보정
+    ANON = clean(anon);
+  }
+  function host() { try { return new URL(URL_).host; } catch { return URL_; } }
 
   function session() { try { return JSON.parse(localStorage.getItem(SK)); } catch { return null; } }
   function setSession(s) { s ? localStorage.setItem(SK, JSON.stringify(s)) : localStorage.removeItem(SK); }
@@ -26,10 +32,16 @@ const CSDB = (() => {
   }
 
   async function _auth(path, body) {
-    const r = await fetch(`${URL_}/auth/v1/${path}`, {
-      method: 'POST', headers: { apikey: ANON, 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+    let r;
+    try {
+      r = await fetch(`${URL_}/auth/v1/${path}`, {
+        method: 'POST', headers: { apikey: ANON, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+    } catch (e) {
+      // "Failed to fetch" 등 네트워크 단계 실패 → 접속 대상 안내
+      throw new Error(`Supabase(${host()})에 연결할 수 없습니다. SUPABASE_URL 값(공백/오타/프로젝트 일시중지) 또는 네트워크를 확인하세요. [${e.message}]`);
+    }
     const data = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(data.error_description || data.msg || data.error || ('HTTP ' + r.status));
     return data;
