@@ -189,9 +189,11 @@ function go(view) {
 }
 
 function chatMode() {
+  // 'ollama'  : 로컬 Ollama (무료, 내 PC) — 사용자가 명시 선택
   // 'server'  : 백엔드 프록시 사용 (서버에 키 있음)
   // 'direct'  : 브라우저에서 직접 Anthropic 호출 (콘솔 설정에 키 있음)
-  // 'prompt'  : 키 없음 → 실행 프롬프트 복사
+  // 'prompt'  : 엔진 없음 → 실행 프롬프트 복사
+  if (S.settings.engine === 'ollama' && (S.settings.ollamaUrl || '').trim()) return 'ollama';
   if (S.backend && S.backend.hasKey) return 'server';
   if (S.settings.apiKey) return 'direct';
   return 'prompt';
@@ -199,7 +201,7 @@ function chatMode() {
 function refreshConn() {
   const mode = chatMode();
   const el = $('#conn-state');
-  const label = { server: '● 서버 연결됨', direct: '● API 연결됨', prompt: '● 프롬프트 모드' }[mode];
+  const label = { ollama: '● 로컬 Ollama', server: '● 서버 연결됨', direct: '● API 연결됨', prompt: '● 프롬프트 모드' }[mode];
   el.textContent = label;
   el.className = 'conn-pill ' + (mode === 'prompt' ? 'conn-off' : 'conn-on');
 }
@@ -298,14 +300,18 @@ function plRun() {
   host.innerHTML = `
     <p style="color:var(--muted);margin:0 0 12px"><b>API 키 없이</b> 실행하는 방법입니다. 아래에 RFP를 붙여넣고 <b>실행 프롬프트 생성</b>을 누르면, Claude Code(구독·과금 아님)에 붙여넣어 자동 실행할 패키지를 만들어 드립니다.</p>
     <textarea id="pl-rfp" rows="10" placeholder="여기에 RFP 전문 또는 사업 개요를 붙여넣으세요. (예: 발주기관·예산·기간·주요 요구사항·평가기준)" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:12px;font-family:inherit;font-size:13px"></textarea>
-    <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
-      <button class="btn primary" id="pl-gen" type="button">실행 프롬프트 생성 & 복사</button>
-      <span style="color:var(--muted);font-size:12px">→ 복사 후 Claude Code 또는 claude.ai/code 에 붙여넣어 실행</span>
+    <div style="display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap">
+      <button class="btn primary" id="pl-auto" type="button">▶ 지금 브라우저에서 자동 실행</button>
+      <button class="btn" id="pl-gen" type="button">실행 프롬프트만 복사</button>
+      <span id="pl-engine-hint" style="color:var(--muted);font-size:12px"></span>
     </div>
     <div id="pl-out" style="margin-top:14px"></div>
     <div class="pl-howto">
       <b>왜 API가 필요 없나요?</b> 브라우저는 <u>오케스트레이션 프롬프트</u>만 만들고, 실제 생성·검증은 이미 구독 중인 <b>Claude Code</b>가 수행합니다(에이전트 24명·GoldWiki 표준 그대로). 토큰 과금이 발생하는 별도 API를 쓰지 않습니다.
     </div>`;
+  const mode = chatMode();
+  const hint = { ollama: '엔진: 🟢 로컬 Ollama (무료)', server: '엔진: 서버', direct: '엔진: 내 API 키', prompt: '⚠ 자동 실행하려면 설정에서 로컬 Ollama를 켜세요' }[mode];
+  $('#pl-engine-hint').textContent = hint;
   $('#pl-gen').onclick = () => {
     const rfp = $('#pl-rfp').value.trim();
     if (!rfp) { toast('RFP 내용을 붙여넣으세요.'); return; }
@@ -314,6 +320,58 @@ function plRun() {
     $('#pl-out').innerHTML = `<div class="msg sys" style="max-width:100%"><div class="md">✅ 실행 프롬프트를 클립보드에 복사했습니다. <b>Claude Code</b>에 붙여넣어 실행하세요.</div></div>
       <pre style="background:#0e1116;color:#e6edf3;padding:14px;border-radius:10px;overflow:auto;font-size:12px;white-space:pre-wrap">${esc(prompt)}</pre>`;
   };
+  $('#pl-auto').onclick = () => {
+    const rfp = $('#pl-rfp').value.trim();
+    if (!rfp) { toast('RFP 내용을 붙여넣으세요.'); return; }
+    if (chatMode() === 'prompt') { toast('자동 실행 엔진이 없습니다. 설정 → 로컬 Ollama를 켜주세요.'); go('settings'); return; }
+    plAutoRun(rfp);
+  };
+}
+
+const PL_STAGES = [
+  { n: '01', t: 'RFP 분석', role: 'rfp-strategy-lead', ask: '요구사항 표(REQ-### · 설명 · 우선순위), 평가기준 대응, 숨은 기대, 리스크 표를 작성하라.' },
+  { n: '02', t: '제안 전략', role: 'proposal-lead', ask: '윈테마 3개, 핵심 차별화, 제안 스토리라인, 1문단 임원 요약을 작성하라.' },
+  { n: '03', t: 'IA·화면목록', role: 'information-architecture-lead', ask: '정보구조(주요 메뉴), 핵심 유저플로우 3개, 화면목록 표(SCR-### · 화면명 · 역할)를 작성하라.' },
+  { n: '04', t: 'UX·UI 컨셉', role: 'ui-design-lead', ask: '모바일 우선 UX 원칙, UI 톤·핵심 컴포넌트, 접근성(WCAG/KWCAG) 포인트를 작성하라.' },
+  { n: '05', t: '개발·보안 계획', role: 'backend-lead', ask: '시스템 아키텍처, 기술스택, API 설계 원칙, 보안·개인정보, 데이터 이관 방안을 작성하라.' },
+  { n: '06', t: 'QA·테스트', role: 'qa-lead', ask: '테스트 전략, 핵심 테스트케이스 표(TC-### · 시나리오 · 기대결과), 성능/접근성/보안, 종료 기준을 작성하라.' },
+  { n: '07', t: '평가위원 채점', role: 'client-simulation-lead', ask: '심사위원 관점 7축 100점 채점표, 축별 강·약점, 보완책, 최종 수주확률(%)을 작성하라.' },
+];
+async function plAutoRun(rfp) {
+  const out = $('#pl-out');
+  out.innerHTML = `<div class="msg sys" style="max-width:100%"><div class="md">▶ ${esc({ ollama: '로컬 Ollama', server: '서버', direct: '내 API 키' }[chatMode()] || '엔진')}(으)로 자동 실행을 시작합니다. 단계별로 결과가 채워집니다…</div></div><div class="pl-runlist" id="pl-runlist"></div>`;
+  const list = $('#pl-runlist');
+  S.active = { kind: 'pipeline', name: 'auto-rfp' };  // 산출물 저장용 컨텍스트
+  let ctx = '';
+  const results = [];
+  for (const s of PL_STAGES) {
+    const card = document.createElement('div'); card.className = 'pl-runitem';
+    card.innerHTML = `<div class="pl-run-h"><b>${s.n} · ${s.t}</b> <span class="pl-run-meta">${esc(s.role)}</span><span class="pl-run-st">⏳ 생성 중…</span></div><div class="md pl-run-body"></div>`;
+    list.appendChild(card); card.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    const system = `너는 ClubSchool AI OS의 ${s.role} 에이전트다. GoldWiki 표준을 따르고 한국어로, 표·체크리스트를 적극 활용해 경영진 수준의 실무 산출물을 간결하지만 충실하게 작성한다. 플레이스홀더·군더더기 금지. 마크다운으로만 답한다.`;
+    const user = `[RFP]\n${rfp}\n\n${ctx ? '[이전 단계 핵심 요약]\n' + ctx + '\n\n' : ''}[작업] ${s.ask}`;
+    try {
+      const reply = await llmComplete(system, [{ role: 'user', content: user }]);
+      card.querySelector('.pl-run-body').innerHTML = renderMd(reply);
+      card.querySelector('.pl-run-st').textContent = '✅ 완료';
+      card.querySelector('.pl-run-st').className = 'pl-run-st ok';
+      ctx += `\n## ${s.n} ${s.t}\n` + reply.slice(0, 450);
+      results.push({ title: `${s.n} ${s.t}`, content: reply });
+      if (loggedIn()) dbSaveDeliverable(`[자동] ${s.n} ${s.t}`, reply);
+    } catch (e) {
+      card.querySelector('.pl-run-st').textContent = '⚠️ 실패';
+      card.querySelector('.pl-run-st').className = 'pl-run-st err';
+      card.querySelector('.pl-run-body').innerHTML = renderMd(chatError(e.message));
+      break;
+    }
+  }
+  if (results.length) {
+    const dl = document.createElement('div'); dl.style.cssText = 'margin-top:14px;display:flex;gap:8px;flex-wrap:wrap';
+    dl.innerHTML = `<button class="btn" id="pl-dl-md" type="button">📥 전체 .md 다운로드</button>`;
+    out.appendChild(dl);
+    $('#pl-dl-md').onclick = () => download('auto-rfp-result.md', results.map(r => `# ${r.title}\n\n${r.content}`).join('\n\n---\n\n'));
+    toast('자동 실행 완료' + (loggedIn() ? ' · 산출물 저장됨' : ''));
+  }
 }
 function plBuildPrompt(rfp) {
   return `/auto-rfp
@@ -552,30 +610,71 @@ function exportQA() {
 /* ---------- 설정 ---------- */
 function viewSettings(V) {
   const s = S.settings;
-  V.innerHTML = `<div class="page-head"><h1>설정</h1><p>API 키는 이 브라우저(localStorage)에만 저장되며 서버로 전송되지 않습니다.</p></div>
+  V.innerHTML = `<div class="page-head"><h1>설정</h1><p>모든 값은 이 브라우저(localStorage)에만 저장됩니다.</p></div>
   <div class="form">
-    <label>Anthropic API 키 <span class="hint">(선택) 입력 시 브라우저에서 에이전트와 직접 대화합니다.</span></label>
-    <input id="set-key" type="password" placeholder="sk-ant-..." value="${esc(s.apiKey || '')}" />
-    <div class="row">
-      <div><label>모델</label>
-        <select id="set-model">
-          ${['claude-opus-4-8', 'claude-sonnet-4-6', 'claude-haiku-4-5-20251001'].map(m => `<option ${s.model === m ? 'selected' : ''}>${m}</option>`).join('')}
-        </select></div>
-      <div><label>최대 출력 토큰</label><input id="set-tokens" type="number" value="${s.maxTokens || 4096}" /></div>
+    <label>응답 엔진 <span class="hint">에이전트 대화·자동 파이프라인을 무엇으로 구동할지</span></label>
+    <select id="set-engine">
+      <option value="auto" ${s.engine !== 'ollama' ? 'selected' : ''}>자동 (서버 키 / 내 API 키)</option>
+      <option value="ollama" ${s.engine === 'ollama' ? 'selected' : ''}>🟢 로컬 Ollama (무료 · 내 PC · API 과금 없음)</option>
+    </select>
+
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;margin:14px 0">
+      <label style="margin-top:0">로컬 Ollama 주소</label>
+      <input id="set-ollama-url" placeholder="http://localhost:11434" value="${esc(s.ollamaUrl || 'http://localhost:11434')}" />
+      <div class="row" style="margin-top:8px">
+        <div style="flex:2"><label>모델</label><input id="set-ollama-model" placeholder="llama3.1 / qwen2.5 / gemma2" value="${esc(s.ollamaModel || '')}" /></div>
+        <div style="flex:1;display:flex;align-items:flex-end"><button class="btn" id="set-ollama-test" type="button" style="width:100%">연결 테스트</button></div>
+      </div>
+      <div id="set-ollama-status" class="hint" style="margin-top:8px"></div>
+      <div class="hint" style="margin-top:6px">설치: <code>ollama pull llama3.1</code> 후 실행. 브라우저 연결 위해 <code>OLLAMA_ORIGINS=*</code> 환경변수로 Ollama를 켜세요. 자세히: <a href="../Docs/OLLAMA.md">Docs/OLLAMA.md</a></div>
     </div>
+
+    <details>
+      <summary style="cursor:pointer;font-weight:600;font-size:13px;color:var(--muted);margin:6px 0">고급: Anthropic API 키 (선택)</summary>
+      <label>Anthropic API 키 <span class="hint">유료. 입력 시 브라우저에서 직접 Claude 호출</span></label>
+      <input id="set-key" type="password" placeholder="sk-ant-..." value="${esc(s.apiKey || '')}" />
+      <div class="row">
+        <div><label>Claude 모델</label>
+          <select id="set-model">${['claude-opus-4-8', 'claude-sonnet-4-6', 'claude-haiku-4-5-20251001'].map(m => `<option ${s.model === m ? 'selected' : ''}>${m}</option>`).join('')}</select></div>
+        <div><label>최대 출력 토큰</label><input id="set-tokens" type="number" value="${s.maxTokens || 4096}" /></div>
+      </div>
+    </details>
+
     <label>응답 언어</label>
     <select id="set-lang"><option ${s.lang !== 'en' ? 'selected' : ''} value="ko">한국어</option><option ${s.lang === 'en' ? 'selected' : ''} value="en">English</option></select>
     <div style="margin-top:18px;display:flex;gap:8px">
       <button class="btn primary" id="set-save">저장</button>
       <button class="btn ghost" id="set-clear">키 삭제</button>
     </div>
-    <p class="hint" style="margin-top:16px">⚠️ 브라우저 직접 호출은 <code>anthropic-dangerous-direct-browser-access</code> 헤더를 사용합니다. 개인 PC/사내망에서만 사용하고, 공용 환경에서는 프롬프트 복사 모드를 권장합니다.</p>
   </div>`;
+  $('#set-ollama-test').onclick = async () => {
+    const url = ($('#set-ollama-url').value || '').trim().replace(/\/+$/, '');
+    const st = $('#set-ollama-status'); st.style.color = 'var(--muted)'; st.textContent = '연결 시도 중…';
+    try {
+      const r = await fetch(url + '/api/tags');
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const d = await r.json(); const names = (d.models || []).map(m => m.name);
+      st.style.color = 'var(--ok)';
+      st.innerHTML = '✅ 연결됨. 설치된 모델: ' + (names.join(', ') || '(없음 — <code>ollama pull llama3.1</code> 필요)');
+      if (names.length && !$('#set-ollama-model').value) $('#set-ollama-model').value = names[0];
+    } catch (e) {
+      st.style.color = 'var(--err)';
+      st.innerHTML = '⚠️ 연결 실패: ' + esc(e.message) + ' — Ollama 실행 및 <code>OLLAMA_ORIGINS=*</code> 설정을 확인하세요. (HTTPS 사이트는 Chrome에서 localhost 호출이 허용됩니다)';
+    }
+  };
   $('#set-save').onclick = () => {
-    S.settings = { apiKey: $('#set-key').value.trim(), model: $('#set-model').value, maxTokens: +$('#set-tokens').value || 4096, lang: $('#set-lang').value };
+    S.settings = Object.assign({}, S.settings, {
+      engine: $('#set-engine').value,
+      ollamaUrl: $('#set-ollama-url').value.trim(),
+      ollamaModel: $('#set-ollama-model').value.trim(),
+      apiKey: ($('#set-key') ? $('#set-key').value.trim() : s.apiKey || ''),
+      model: ($('#set-model') ? $('#set-model').value : s.model),
+      maxTokens: ($('#set-tokens') ? +$('#set-tokens').value : s.maxTokens) || 4096,
+      lang: $('#set-lang').value,
+    });
     saveSettings(S.settings); refreshConn(); toast('설정을 저장했습니다.');
   };
-  $('#set-clear').onclick = () => { S.settings.apiKey = ''; saveSettings(S.settings); refreshConn(); $('#set-key').value = ''; toast('API 키를 삭제했습니다.'); };
+  $('#set-clear').onclick = () => { S.settings.apiKey = ''; saveSettings(S.settings); refreshConn(); if ($('#set-key')) $('#set-key').value = ''; toast('API 키를 삭제했습니다.'); };
 }
 
 /* ---------- 영속화(Supabase) ---------- */
@@ -732,7 +831,8 @@ async function sendMessage() {
 
   const loading = addMsg('bot', '_생각 중…_');
   try {
-    const reply = (mode === 'server') ? await callBackend(augmented) : await callAnthropicDirect(augmented);
+    const { system, history } = buildSystemAndHistory(augmented);
+    const reply = await llmComplete(system, history);
     loading.querySelector('.md').innerHTML = renderMd(reply);
     S.chat[S.chat.length - 1].content = reply;
     addBotActions(loading, reply, text);
@@ -740,6 +840,56 @@ async function sendMessage() {
   } catch (e) {
     loading.querySelector('.md').innerHTML = renderMd('⚠️ ' + chatError(e.message));
   }
+}
+
+/* 통합 LLM 호출 — 현재 엔진(ollama/server/direct)으로 디스패치 */
+async function llmComplete(system, history) {
+  const mode = chatMode();
+  if (mode === 'ollama') return callOllama(system, history);
+  if (mode === 'server') return callBackendRaw(system, history);
+  if (mode === 'direct') return callAnthropicRaw(system, history);
+  throw new Error('실행 엔진이 없습니다. 설정에서 로컬 Ollama를 켜거나 API 키를 입력하세요.');
+}
+
+/* 로컬 Ollama (무료, 내 PC) — OpenAI 호환 아님, 네이티브 /api/chat 사용 */
+async function callOllama(system, history) {
+  const base = (S.settings.ollamaUrl || 'http://localhost:11434').trim().replace(/\/+$/, '');
+  const messages = [{ role: 'system', content: system }, ...history];
+  let r;
+  try {
+    r = await fetch(base + '/api/chat', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ model: S.settings.ollamaModel || 'llama3.1', stream: false, messages, options: { temperature: 0.4 } }),
+    });
+  } catch (e) {
+    throw new Error(`Ollama(${base})에 연결할 수 없습니다. Ollama 실행 여부와 OLLAMA_ORIGINS 설정을 확인하세요. [${e.message}]`);
+  }
+  if (!r.ok) throw new Error('Ollama HTTP ' + r.status);
+  const d = await r.json();
+  return (d.message && d.message.content || '').trim() || '(빈 응답)';
+}
+
+/* 서버 프록시 경유 */
+async function callBackendRaw(system, history) {
+  const res = await fetch('/api/chat', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ model: S.settings.model || (S.backend && S.backend.model) || 'claude-opus-4-8', max_tokens: S.settings.maxTokens || 4096, system, messages: history }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+  return data.text || '(빈 응답)';
+}
+
+/* 브라우저 직접 Anthropic */
+async function callAnthropicRaw(system, history) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-api-key': S.settings.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+    body: JSON.stringify({ model: S.settings.model || 'claude-opus-4-8', max_tokens: S.settings.maxTokens || 4096, system, messages: history }),
+  });
+  if (!res.ok) { let d = res.status + ''; try { const j = await res.json(); d = (j.error && j.error.message) || d; } catch {} throw new Error(d); }
+  const data = await res.json();
+  return (data.content || []).map(b => b.text || '').join('\n').trim() || '(빈 응답)';
 }
 function chatError(raw) {
   const m = (raw || '').toLowerCase();
@@ -780,49 +930,6 @@ function buildSystemAndHistory(userText) {
     .map(m => ({ role: m.role === 'bot' ? 'assistant' : 'user', content: m.content }));
   history.push({ role: 'user', content: umsg });
   return { system, history };
-}
-
-/* 서버 프록시 경유 (배포 환경 권장 — 브라우저에 키 불필요) */
-async function callBackend(userText) {
-  const { system, history } = buildSystemAndHistory(userText);
-  const res = await fetch('/api/chat', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({
-      model: S.settings.model || (S.backend && S.backend.model) || 'claude-opus-4-8',
-      max_tokens: S.settings.maxTokens || 4096,
-      system, messages: history,
-    }),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
-  return data.text || '(빈 응답)';
-}
-
-/* 브라우저 직접 호출 (로컬/개인용 — 콘솔 설정의 키 사용) */
-async function callAnthropicDirect(userText) {
-  const { system, history } = buildSystemAndHistory(userText);
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'x-api-key': S.settings.apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
-    },
-    body: JSON.stringify({
-      model: S.settings.model || 'claude-opus-4-8',
-      max_tokens: S.settings.maxTokens || 4096,
-      system, messages: history,
-    }),
-  });
-  if (!res.ok) {
-    let detail = res.status + '';
-    try { const j = await res.json(); detail = (j.error && j.error.message) || detail; } catch {}
-    throw new Error(detail);
-  }
-  const data = await res.json();
-  return (data.content || []).map(b => b.text || '').join('\n').trim() || '(빈 응답)';
 }
 
 /* ---------- 검색 ---------- */
