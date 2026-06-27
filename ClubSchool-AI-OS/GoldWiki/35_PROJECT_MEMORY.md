@@ -109,6 +109,53 @@ status: active
 
 ---
 
+## 3-1. 스냅샷 — MERITZ-2025-TM (RFP 분석)
+
+```yaml
+---
+project: MERITZ-2025-TM
+client: 메리츠화재 TM사업부문
+phase: 제안
+owner: rfp-strategy-lead
+last_updated: 2026-06-27
+status: active
+---
+```
+
+### 결정(Decisions)
+| # | 결정 요약 | ADR |
+| --- | --- | --- |
+| 1 | 메리츠화재 인터넷 마케팅 플랫폼 운영(2025) 입찰 **참여(Bid)** | [ADR-0006](32_DECISION_LOG.md) |
+| 2 | 별첨4는 **보장분석 전환율 + 펫보험 이탈율** 2과제로 대응 | [ADR-0006](32_DECISION_LOG.md) |
+
+### 가정(Assumptions)
+| # | 가정 | 검증 책임 | 상태 |
+| --- | --- | --- | --- |
+| 1 | 상주 9.0 MM/월(현행 9명 등급) 체계 유지 가능 | pmo-director | 검증중 |
+| 2 | 단가 동결(C-001)을 견디는 원가 구조 설계 가능 | executive-director | 검증중 |
+| 3 | 금융 보안·개인정보 운영 거버넌스 충족 가능 | security-risk-lead | 검증중 |
+
+### 미해결 질문(Open Questions)
+| # | 질문 | 담당 | 기한 | 상태 |
+| --- | --- | --- | --- | --- |
+| 1 | 포괄 조항(R-010) 업무량 상한·변경관리 기준 | rfp-strategy-lead | Q&A 마감 | 열림 |
+| 2 | 분기 평가에 따른 MM 증감 단가·정산 방식 | executive-director | Q&A 마감 | 열림 |
+| 3 | 신규 서비스 구축의 개발 범위 경계 | rfp-strategy-lead | Q&A 마감 | 열림 |
+
+### 현재 상태(Current State)
+- `/rfp-start` 분석 패키지 산출 완료(자체 채점 88, G2 통과): [Examples/RFP_Analysis_Meritz_2025.md](../Examples/RFP_Analysis_Meritz_2025.md).
+- 다음: Q&A 정리 → 별첨3 인력·별첨4 SB → 원가/가격 확정 → `/proposal-build` 인계.
+
+### 리스크(Risks)
+| # | 리스크 | 영향 | 가능성 | 대응 |
+| --- | --- | --- | --- | --- |
+| 1 | 가격 경쟁(차순위 −5점) | 높음 | 높음 | 최저임금 준수 원가 최적화, 2위 이내 + 기술 우위 |
+| 2 | 인력 연속성(2년+연장) | 높음 | 중간 | 백업 풀·지식 이관 SOP |
+| 3 | 단가 동결 원가 부담(C-001) | 중간 | 높음 | 보수적 단가 설계 |
+| 4 | 금융 보안·개인정보 | 높음 | 중간 | 보안 거버넌스·접근통제·감사로그 |
+
+---
+
 ## 4. 운영 규칙
 
 1. **작업 전 읽기, 작업 후 쓰기** — 모든 에이전트의 기본 루프.
