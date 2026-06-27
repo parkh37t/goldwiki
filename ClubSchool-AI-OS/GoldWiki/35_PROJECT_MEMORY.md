@@ -143,9 +143,12 @@ status: active
 | 3 | 신규 서비스 구축의 개발 범위 경계 | rfp-strategy-lead | Q&A 마감 | 열림 |
 
 ### 현재 상태(Current State)
-- `/rfp-start` 분석 패키지 산출 완료(자체 채점 88, G2 통과): [Examples/RFP_Analysis_Meritz_2025.md](../Examples/RFP_Analysis_Meritz_2025.md).
-- 별첨4 과제① **보장분석 전환율 개선 SB 초안** 산출(6매 구성): [Examples/Meritz_별첨4_보장분석_SB초안.md](../Examples/Meritz_별첨4_보장분석_SB초안.md).
-- 다음: 별첨4 과제②(펫보험 이탈율) SB → 별첨3 인력 → 원가/가격 확정 → `/proposal-build` 인계.
+- `/rfp-start` 분석 패키지(자체 채점 88, G2 통과): [Examples/RFP_Analysis_Meritz_2025.md](../Examples/RFP_Analysis_Meritz_2025.md).
+- 별첨4 ① 보장분석 SB + 동작 프로토타입: [SB](../Examples/Meritz_별첨4_보장분석_SB초안.md) · `Examples/prototypes/meritz-bojang-analysis.html`.
+- 별첨4 ② 펫보험 SB + 동작 프로토타입: [SB](../Examples/Meritz_별첨4_펫보험_SB초안.md) · `Examples/prototypes/meritz-pet-insurance.html`.
+- 제안서 본문 초안(필수 목차·평가 80:20 대응): [Examples/Meritz_제안서_본문.md](../Examples/Meritz_제안서_본문.md).
+- Figma 6화면 시각화(clubschool 팀): https://www.figma.com/design/5Ryfm9XmHglumCbWWIUEJN
+- 다음: 별첨3 인력 경력 → 원가/가격 확정 → PT(30분) 자료 구성.
 
 ### 리스크(Risks)
 | # | 리스크 | 영향 | 가능성 | 대응 |

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>메리츠 다이렉트 펫보험 — 가입 이탈율 개선 동작 프로토타입 (별첨4 ②)</title>
+<style>
+:root{
+  --brand:#E2231A; --brand-2:#b51812; --brand-soft:#fdecea;
+  --ink:#1a1d22; --ink-2:#48505c; --muted:#7b8493; --faint:#aab2c0;
+  --bg:#eef1f5; --surface:#ffffff; --surface-2:#f5f7fa; --line:#e6e9ef; --line-2:#d7dce4;
+  --ok:#1fab6d; --warn:#f0a020;
+  --r:16px; --r-sm:10px; --tap:48px;
+  --sans:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;
+  --shadow:0 1px 2px rgba(20,30,55,.06),0 10px 30px rgba(20,30,55,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:#0e1116;color:var(--ink);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 12px;gap:14px;-webkit-font-smoothing:antialiased}
+.head{color:#cdd5e2;text-align:center;max-width:440px}
+.head h1{font-size:15px;color:#fff;font-weight:800}
+.head p{font-size:12px;color:#8b94a6;margin-top:4px}
+.stepper{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:460px}
+.stepper button{border:1px solid #2a3140;background:#161922;color:#aab2c0;font-size:11px;padding:6px 10px;border-radius:999px;cursor:pointer;font-family:inherit}
+.stepper button.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:700}
+.phone{width:390px;max-width:96vw;height:780px;max-height:86vh;background:var(--bg);border-radius:34px;box-shadow:0 0 0 11px #11131a,0 24px 60px rgba(0,0,0,.55);overflow:hidden;position:relative;display:flex;flex-direction:column}
+.notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:150px;height:26px;background:#11131a;border-radius:0 0 16px 16px;z-index:30}
+.topbar{height:54px;display:flex;align-items:center;gap:10px;padding:0 16px;background:var(--surface);border-bottom:1px solid var(--line);position:relative;z-index:20}
+.topbar .back{font-size:20px;color:var(--ink-2);background:none;border:0;cursor:pointer;width:32px}
+.topbar .ttl{font-weight:700;font-size:15px}
+.topbar .step{margin-left:auto;font-size:12px;color:var(--muted)}
+.progress{height:3px;background:var(--line)}
+.progress>i{display:block;height:100%;background:var(--brand);width:0;transition:width .35s}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.screen{display:none;padding:20px 18px 28px;animation:fade .25s ease}
+.screen.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.h-lead{font-size:23px;font-weight:900;line-height:1.32;letter-spacing:-.02em}
+.h-lead .em{color:var(--brand)}
+.sub{color:var(--muted);font-size:13px;margin-top:8px;line-height:1.6}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;box-shadow:var(--shadow)}
+.cta{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:var(--tap);background:var(--brand);color:#fff;border:0;border-radius:14px;font-size:16px;font-weight:800;font-family:inherit;cursor:pointer;box-shadow:0 8px 22px rgba(226,35,26,.28)}
+.cta:active{transform:translateY(1px)}
+.cta.sec{background:var(--surface);color:var(--brand);border:1.5px solid var(--brand);box-shadow:none}
+.sticky{position:sticky;bottom:0;background:linear-gradient(180deg,transparent,var(--bg) 26%);padding:14px 0 4px;margin-top:16px}
+.savebar{display:flex;align-items:center;gap:8px;background:#fff7e6;border:1px solid #ffe2a8;color:#8a6314;font-size:11.5px;padding:8px 12px;border-radius:10px;margin-bottom:12px}
+.label{font-size:13px;font-weight:700;margin:18px 0 9px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1.5px solid var(--line-2);background:var(--surface);color:var(--ink-2);border-radius:999px;padding:9px 15px;font-size:13.5px;cursor:pointer;font-family:inherit;min-height:42px;display:inline-flex;align-items:center;gap:6px}
+.chip.on{border-color:var(--brand);background:var(--brand-soft);color:var(--brand-2);font-weight:700}
+.note{font-size:11.5px;color:var(--muted);display:flex;gap:6px;align-items:center;margin-top:14px}
+.field{margin:14px 0}
+.field label{font-size:12.5px;font-weight:700;color:var(--ink-2);display:block;margin-bottom:6px}
+.field input{width:100%;min-height:var(--tap);border:1.5px solid var(--line-2);border-radius:11px;padding:0 14px;font-size:15px;font-family:inherit;background:var(--surface)}
+.field input:focus{outline:none;border-color:var(--brand)}
+.field input[readonly]{background:var(--surface-2);color:var(--muted)}
+/* 견적 */
+.quote{text-align:center;background:linear-gradient(160deg,#fff,#fff5f4);border:1px solid var(--brand-soft)}
+.quote .px{font-size:38px;font-weight:900;color:var(--brand)}
+.quote .px small{font-size:15px;color:var(--muted);font-weight:700}
+/* 플랜 */
+.plan{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.plan .p{border:1.5px solid var(--line-2);border-radius:14px;padding:14px;cursor:pointer;display:flex;align-items:center;gap:12px;background:var(--surface)}
+.plan .p.on{border-color:var(--brand);background:var(--brand-soft)}
+.plan .p .r{width:20px;height:20px;border-radius:50%;border:2px solid var(--line-2);flex-shrink:0}
+.plan .p.on .r{border-color:var(--brand);background:var(--brand);box-shadow:inset 0 0 0 3px #fff}
+.plan .p .m{flex:1}.plan .p .m b{font-size:14.5px}.plan .p .m p{font-size:12px;color:var(--muted);margin-top:2px}
+.plan .p .pr{font-weight:900;color:var(--brand);font-size:15px;white-space:nowrap}
+.badge-best{font-size:10px;background:var(--brand);color:#fff;border-radius:6px;padding:2px 7px;margin-left:6px;font-weight:700}
+/* 특약 토글 */
+.opt{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.opt:last-child{border-bottom:0}
+.opt .m{flex:1}.opt .m b{font-size:14px}.opt .m p{font-size:11.5px;color:var(--muted)}
+.sw{width:46px;height:28px;border-radius:999px;background:var(--line-2);position:relative;cursor:pointer;transition:background .15s;flex-shrink:0}
+.sw>i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .15s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.sw.on{background:var(--brand)}.sw.on>i{left:21px}
+.agree{display:flex;gap:9px;align-items:flex-start;font-size:12.5px;color:var(--ink-2);margin:12px 0;line-height:1.5}
+.agree input{width:20px;height:20px;margin-top:1px;accent-color:var(--brand)}
+.pricebar{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--line);margin:16px -18px -28px;padding:14px 18px}
+.pricebar .row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.pricebar .row b{font-size:18px;color:var(--brand)}
+.done{text-align:center;padding:48px 10px}
+.done .ok{width:84px;height:84px;border-radius:50%;background:var(--ok);color:#fff;font-size:44px;display:grid;place-items:center;margin:0 auto 18px;box-shadow:0 12px 30px rgba(31,171,109,.35)}
+.kpi-foot{max-width:460px;color:#7b8493;font-size:11px;text-align:center;line-height:1.7}
+.kpi-foot b{color:#cdd5e2}
+.pet{font-size:30px}
+</style>
+</head>
+<body>
+<div class="head">
+  <h1>메리츠 다이렉트 펫보험 — 가입 이탈율 개선 동작 프로토타입</h1>
+  <p>별첨4 ② · 단계별 이탈 제거(즉시견적·1스텝1과제·진행저장·투명가격) · 클릭하여 흐름 체험</p>
+</div>
+<div class="stepper" id="stepper"></div>
+
+<div class="phone">
+  <div class="notch"></div>
+  <div class="topbar">
+    <button class="back" id="back" aria-label="뒤로">‹</button>
+    <span class="ttl">펫보험 가입</span>
+    <span class="step" id="stepTxt"></span>
+  </div>
+  <div class="progress"><i id="prog"></i></div>
+  <div class="scroll" id="scroll">
+
+    <!-- 1 상품 소개/시작 -->
+    <section class="screen on" data-s="0">
+      <div style="text-align:center;font-size:54px">🐶🐱</div>
+      <h2 class="h-lead" style="text-align:center;margin-top:8px">우리 아이 병원비,<br><span class="em">월 1만원대</span>로 준비</h2>
+      <p class="sub" style="text-align:center">3가지만 입력하면 <b>즉시 견적</b>이 나와요. 가입까지 2분.</p>
+      <div class="card" style="margin-top:18px;display:flex;gap:12px;text-align:center">
+        <div style="flex:1"><div style="font-size:20px">⚡</div><div style="font-size:12px;font-weight:700;margin-top:4px">즉시 견적</div></div>
+        <div style="flex:1"><div style="font-size:20px">💾</div><div style="font-size:12px;font-weight:700;margin-top:4px">진행 자동저장</div></div>
+        <div style="flex:1"><div style="font-size:20px">🔒</div><div style="font-size:12px;font-weight:700;margin-top:4px">간편 가입</div></div>
+      </div>
+      <div class="sticky"><button class="cta" data-go="1">내 아이 견적 보기 ›</button>
+        <div class="note" style="justify-content:center">가입 권유 전화 없이 견적만 확인 가능</div></div>
+    </section>
+
+    <!-- 2 반려동물 정보 -->
+    <section class="screen" data-s="1">
+      <div class="savebar">💾 입력 중인 내용은 자동 저장돼요. 나가도 이어서 가입 가능!</div>
+      <p class="sub" style="margin-top:0">우리 아이는 어떤 친구인가요?</p>
+      <div class="label">반려동물</div>
+      <div class="chips" data-single><span class="chip on">🐶 강아지</span><span class="chip">🐱 고양이</span></div>
+      <div class="label">나이</div>
+      <div class="chips" data-single><span class="chip">0~1세</span><span class="chip on">2~4세</span><span class="chip">5~7세</span><span class="chip">8세+</span></div>
+      <div class="label">품종 <span style="color:var(--muted);font-weight:500">(모르면 건너뛰기)</span></div>
+      <div class="chips" data-single><span class="chip on">소형견</span><span class="chip">중형견</span><span class="chip">대형견</span><span class="chip">믹스</span></div>
+      <div class="note">🔒 정보는 견적 산출에만 사용돼요</div>
+      <div class="sticky"><button class="cta" data-go="2">즉시 견적 보기 ›</button></div>
+    </section>
+
+    <!-- 3 즉시 견적 + 플랜 -->
+    <section class="screen" data-s="2">
+      <div class="card quote">
+        <div style="font-size:12.5px;color:var(--muted);font-weight:700">2~4세 소형견 기준 예상 보험료</div>
+        <div class="px" style="margin:6px 0">12,800<small>원 / 월</small></div>
+        <div style="font-size:12px;color:var(--ok);font-weight:700">병원비 최대 70% 보장</div>
+      </div>
+      <div class="label">플랜 선택</div>
+      <div class="plan">
+        <div class="p" data-pick><span class="r"></span><div class="m"><b>실속형</b><p>입·통원 50% 보장</p></div><span class="pr">9,500원</span></div>
+        <div class="p on" data-pick><span class="r"></span><div class="m"><b>표준형 <span class="badge-best">추천</span></b><p>입·통원 70% + 수술</p></div><span class="pr">12,800원</span></div>
+        <div class="p" data-pick><span class="r"></span><div class="m"><b>고급형</b><p>입·통원 90% + 슬개골</p></div><span class="pr">18,400원</span></div>
+      </div>
+      <div class="note">언제든 플랜을 바꿔도 보험료가 바로 반영돼요</div>
+      <div class="sticky"><button class="cta" data-go="3">이 플랜으로 계속 ›</button></div>
+    </section>
+
+    <!-- 4 보장 커스터마이즈(특약) -->
+    <section class="screen" data-s="3">
+      <p class="sub" style="margin-top:0">필요한 보장만 켜세요. 가격은 아래에서 실시간 반영돼요.</p>
+      <div class="card" style="margin-top:14px">
+        <div class="opt"><div class="m"><b>슬개골 탈구 보장</b><p>소형견 빈발 · 권장</p></div><div class="sw on" data-sw="3000"><i></i></div></div>
+        <div class="opt"><div class="m"><b>피부질환 보장</b><p>알레르기·피부염</p></div><div class="sw" data-sw="2000"><i></i></div></div>
+        <div class="opt"><div class="m"><b>통원 한도 확대</b><p>1일 15만→25만</p></div><div class="sw" data-sw="2500"><i></i></div></div>
+        <div class="opt"><div class="m"><b>배상책임</b><p>타인·반려동물 사고</p></div><div class="sw" data-sw="900"><i></i></div></div>
+      </div>
+      <div class="pricebar">
+        <div class="row"><span style="font-size:13px;color:var(--muted)">월 보험료</span><b id="totPx">15,800원</b></div>
+        <button class="cta" data-go="4">가입 진행 ›</button>
+      </div>
+    </section>
+
+    <!-- 5 가입정보·약관 -->
+    <section class="screen" data-s="4">
+      <div class="savebar">💾 거의 다 왔어요! 정보는 인증으로 자동 채워집니다.</div>
+      <div class="field"><label>보호자 이름</label><input value="홍길동" /></div>
+      <div class="field"><label>연락처</label><input value="간편인증으로 자동 입력됨" readonly /></div>
+      <div class="field"><label>반려동물 이름</label><input placeholder="예: 콩이" value="콩이" /></div>
+      <label class="agree"><input type="checkbox" checked /> <span>[필수] 보험 약관 및 개인정보 수집·이용 동의 (<u>전문 보기</u>)</span></label>
+      <label class="agree"><input type="checkbox" /> <span>[선택] 마케팅 정보 수신 동의</span></label>
+      <div class="sticky"><button class="cta" data-go="5">간편인증 후 결제 ›</button>
+        <div class="note" style="justify-content:center">카카오·네이버·토스·PASS 1탭 인증</div></div>
+    </section>
+
+    <!-- 6 결제 + 완료 -->
+    <section class="screen" data-s="5">
+      <div id="pay">
+        <div class="card quote" style="margin-top:4px">
+          <div style="font-size:12.5px;color:var(--muted);font-weight:700">표준형 + 슬개골 특약 · 월 자동결제</div>
+          <div class="px" style="margin:6px 0">15,800<small>원 / 월</small></div>
+        </div>
+        <div class="label">결제 수단</div>
+        <div class="chips" data-single><span class="chip on">카카오페이</span><span class="chip">네이버페이</span><span class="chip">토스</span><span class="chip">페이코</span><span class="chip">카드</span></div>
+        <div class="note">현행 운영 중인 간편결제(토스·네이버·카카오·페이코)와 동일 UX</div>
+        <div class="sticky"><button class="cta" id="payBtn">월 15,800원 결제하고 가입 완료 ›</button></div>
+      </div>
+      <div id="complete" style="display:none">
+        <div class="done">
+          <div class="ok">✓</div>
+          <h2 style="font-size:21px;font-weight:900">콩이의 보험 가입 완료! 🎉</h2>
+          <p class="sub">증권번호 <b>MZ-PET-0042</b><br>오늘부터 병원비 걱정 끝!</p>
+          <button class="cta sec" style="margin-top:24px" data-go="0">처음부터 다시 보기</button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<div class="kpi-foot">
+  목표 KPI — 가입 완료율 <b>+12%p</b> · 견적→가입 전환 <b>+10%p</b> · 단계별 이탈 <b>−25%</b><br>
+  ClubSchool AI OS · 메리츠화재 인터넷 마케팅 플랫폼 운영 제안(별첨4 ②) · 디자인 토큰 그대로 구현 승계
+</div>
+
+<script>
+const screens=[...document.querySelectorAll('.screen')];
+const names=['상품소개','반려동물','견적·플랜','보장설정','가입정보','결제·완료'];
+const prog=document.getElementById('prog'), stepTxt=document.getElementById('stepTxt'), stepper=document.getElementById('stepper');
+let cur=0; const BASE=12800;
+names.forEach((n,i)=>{const b=document.createElement('button');b.textContent=(i+1)+'. '+n;b.onclick=()=>go(i);stepper.appendChild(b);});
+function go(i){
+  cur=Math.max(0,Math.min(screens.length-1,i));
+  screens.forEach((s,j)=>s.classList.toggle('on',j===cur));
+  [...stepper.children].forEach((b,j)=>b.classList.toggle('on',j===cur));
+  prog.style.width=((cur+1)/screens.length*100)+'%';
+  stepTxt.textContent=(cur+1)+' / '+screens.length;
+  document.getElementById('scroll').scrollTop=0;
+  if(cur===5)resetPay();
+}
+document.getElementById('back').onclick=()=>go(cur-1);
+function recalc(){let t=BASE;document.querySelectorAll('.sw.on').forEach(s=>t+=+s.dataset.sw);document.getElementById('totPx').textContent=t.toLocaleString()+'원';}
+document.addEventListener('click',e=>{
+  const g=e.target.closest('[data-go]'); if(g){go(+g.dataset.go);return;}
+  const sw=e.target.closest('.sw'); if(sw){sw.classList.toggle('on');recalc();return;}
+  const pk=e.target.closest('[data-pick]'); if(pk){pk.parentElement.querySelectorAll('.p').forEach(x=>x.classList.remove('on'));pk.classList.add('on');return;}
+  const chip=e.target.closest('.chip'); if(chip){const w=chip.parentElement;if(w.hasAttribute('data-single'))w.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));chip.classList.toggle('on');}
+});
+document.getElementById('payBtn').onclick=()=>{document.getElementById('pay').style.display='none';document.getElementById('complete').style.display='';document.getElementById('scroll').scrollTop=0;};
+function resetPay(){document.getElementById('pay').style.display='';document.getElementById('complete').style.display='none';}
+recalc();go(0);
+</script>
+</body>
+</html>
