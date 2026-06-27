@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>메리츠화재 별첨4 서비스 개선 — 요약 디자인본</title>
+<meta name="hz:slide-selector" content=".page" />
+<meta name="hz:canvas-width" content="794" />
+<meta name="hz:canvas-height" content="1123" />
+<link rel="stylesheet" href="https://use.typekit.net/bzv3lqo.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{display:flex;flex-direction:column;align-items:center;gap:24px;background:#e9edf2;padding:24px;font-family:"source-han-sans-cjk-ko","Noto Sans KR",sans-serif}
+.page{position:relative;width:210mm;height:297mm;background:#fff;overflow:hidden;color:#1a1f2b}
+.bar{position:absolute;top:0;left:0;width:100%;height:7mm;background:linear-gradient(90deg,#c9102e,#7d0b1d)}
+.kick{position:absolute;top:16mm;left:18mm;font-size:9pt;letter-spacing:5px;color:#c9102e;font-weight:700}
+.h1{position:absolute;top:21mm;left:18mm;width:150mm;font-size:25pt;font-weight:900;line-height:1.2;color:#13161d}
+.tagn{position:absolute;top:17mm;right:18mm;font-size:8.5pt;color:#6a7488;text-align:right;line-height:1.7}
+.lede{position:absolute;left:18mm;width:155mm;font-size:10pt;color:#5a6373;line-height:1.6}
+.sec{position:absolute;left:18mm;font-size:9pt;letter-spacing:2px;color:#8a93a6;font-weight:700;text-transform:uppercase}
+.flow{position:absolute;left:18mm;width:174mm;display:flex;align-items:center;gap:2mm}
+.step{flex:1;background:#fafbfc;border:1px solid #e6e9ef;border-radius:3mm;padding:3.5mm 2mm;text-align:center}
+.step .s{font-size:8.5pt;font-weight:700;color:#13161d}
+.step .x{font-size:7pt;color:#c9102e;margin-top:1mm}
+.arr{color:#c9b;font-size:11pt;color:#c9102e;flex:0 0 auto}
+.grid2{position:absolute;left:18mm;width:174mm;display:flex;gap:5mm}
+.box{flex:1;background:#fafbfc;border:1px solid #e6e9ef;border-radius:4mm;padding:5mm}
+.box.red{background:#fdf1f3;border-color:#f3c9d1}
+.box h4{font-size:10pt;color:#13161d;font-weight:700;margin-bottom:2.5mm}
+.box ul{list-style:none;font-size:8.7pt;color:#4a5363;line-height:1.7}
+.box li{padding-left:4mm;position:relative;margin-bottom:0.6mm}
+.box li::before{content:"";position:absolute;left:0;top:2.4mm;width:1.6mm;height:1.6mm;border-radius:50%;background:#c9102e}
+.kpis{position:absolute;left:18mm;width:174mm;display:flex;gap:5mm}
+.kpi{flex:1;background:linear-gradient(160deg,#fff,#fff5f4);border:1px solid #f3c9d1;border-radius:4mm;padding:4.5mm;text-align:center}
+.kpi .v{font-size:21pt;font-weight:900;color:#c9102e}.kpi .l{font-size:7.8pt;color:#6a7488;margin-top:1mm;line-height:1.4}
+.proto{position:absolute;left:18mm;width:174mm;background:#13161d;border-radius:4mm;padding:4.5mm 6mm;color:#fff;display:flex;align-items:center;gap:5mm}
+.proto .t{font-size:9pt;font-weight:700;color:#ff8a98}.proto .d{font-size:8.3pt;color:#c3cad7;flex:1}
+.foot{position:absolute;bottom:12mm;left:18mm;width:174mm;display:flex;justify-content:space-between;font-size:7.5pt;color:#9aa2b1;border-top:1px solid #e6e9ef;padding-top:4mm}
+</style>
+</head>
+<body>
+<!-- ① 보장분석 -->
+<div class="page" data-canvas-width="794" data-canvas-height="1123">
+  <div class="bar"></div>
+  <div class="kick">별첨4 ① · 서비스 개선</div>
+  <div class="tagn">대상 보장분석(모바일)<br>목표 상담 전환율 ↑</div>
+  <div class="h1">모바일 보장분석<br>전환율 개선</div>
+  <div class="lede" style="top:54mm">현행 보장분석 플로우의 전환 병목을 근거 기반으로 재설계. 신규 아이디어 공모가 아닌, 보험·마케팅 이해와 협업 적합성 증빙(H1).</div>
+
+  <div class="sec" style="top:72mm">AS-IS 이탈 흐름</div>
+  <div class="flow" style="top:78mm">
+    <div class="step"><div class="s">시작</div><div class="x">동기 부족</div></div><div class="arr">›</div>
+    <div class="step"><div class="s">본인인증</div><div class="x">초반 마찰</div></div><div class="arr">›</div>
+    <div class="step"><div class="s">입력</div><div class="x">부담·불안</div></div><div class="arr">›</div>
+    <div class="step"><div class="s">진단결과</div><div class="x">추상적</div></div><div class="arr">›</div>
+    <div class="step"><div class="s">상담신청</div><div class="x">동선 단절</div></div>
+  </div>
+
+  <div class="sec" style="top:100mm">TO-BE 5원칙</div>
+  <div class="grid2" style="top:106mm">
+    <div class="box red"><h4>설계 원칙</h4><ul><li>선(先)가치 · 후(後)인증 — 인증을 결과 직전으로</li><li>여정 가시화 — 진행률·예상시간</li><li>갭 시각화 — 부족 보장 점수·금액</li><li>결과=행동 연결 — 카드별 상담 CTA</li></ul></div>
+    <div class="box"><h4>신뢰·접근성</h4><ul><li>“가입 권유 아님” 고지로 불안 해소</li><li>간편인증(카카오/네이버/토스/PASS)</li><li>WCAG 2.2 AA · 탭타깃 48px</li><li>Performance Lab 퍼널 계측 + A/B</li></ul></div>
+  </div>
+
+  <div class="sec" style="top:166mm">목표 KPI</div>
+  <div class="kpis" style="top:172mm">
+    <div class="kpi"><div class="v">+15%p</div><div class="l">진단 완료율</div></div>
+    <div class="kpi"><div class="v">+8%p</div><div class="l">상담 전환율</div></div>
+    <div class="kpi"><div class="v">+10%p</div><div class="l">본인인증 통과율</div></div>
+    <div class="kpi"><div class="v">5</div><div class="l">재설계 화면</div></div>
+  </div>
+
+  <div class="proto" style="top:200mm">
+    <div class="t">▶ 동작 프로토타입</div>
+    <div class="d">시작 → 입력 → 분석·인증 → 결과(갭 시각화) → 상담신청 — 5화면 클릭 시연 제공</div>
+  </div>
+  <div class="foot"><span>ClubSchool AI OS · 별첨4 서비스 개선</span><span>1 / 2 · 보장분석</span></div>
+</div>
+
+<!-- ② 펫보험 -->
+<div class="page" data-canvas-width="794" data-canvas-height="1123">
+  <div class="bar"></div>
+  <div class="kick">별첨4 ② · 서비스 개선</div>
+  <div class="tagn">대상 다이렉트 펫보험<br>목표 가입 이탈율 ↓</div>
+  <div class="h1">펫보험 가입<br>이탈율 개선</div>
+  <div class="lede" style="top:54mm">가입 퍼널 단계별 이탈 원인을 제거. 즉시 견적·1스텝 1과제·진행 저장·투명 가격으로 완료율을 끌어올린다.</div>
+
+  <div class="sec" style="top:72mm">AS-IS 이탈 흐름</div>
+  <div class="flow" style="top:78mm">
+    <div class="step"><div class="s">상품소개</div><div class="x">가격 모름</div></div><div class="arr">›</div>
+    <div class="step"><div class="s">정보입력</div><div class="x">입력 피로</div></div><div class="arr">›</div>
+    <div class="step"><div class="s">견적·플랜</div><div class="x">비교 부재</div></div><div class="arr">›</div>
+    <div class="step"><div class="s">약관</div><div class="x">복잡</div></div><div class="arr">›</div>
+    <div class="step"><div class="s">결제</div><div class="x">진행 손실</div></div>
+  </div>
+
+  <div class="sec" style="top:100mm">TO-BE 4원칙</div>
+  <div class="grid2" style="top:106mm">
+    <div class="box red"><h4>설계 원칙</h4><ul><li>즉시 견적 · 투명 가격 — 3개 입력만으로 보험료</li><li>1스텝 1과제 + 칩 입력 — 타이핑 최소화</li><li>진행 자동저장 — 이탈해도 이어서 가입</li><li>플랜 비교 + 실시간 가격(특약 토글)</li></ul></div>
+    <div class="box"><h4>전환 장치</h4><ul><li>인증 정보 자동 채움(마이크로 폼)</li><li>현행 간편결제(토스/네이버/카카오/페이코) 일관 UX</li><li>WCAG 2.2 AA · 탭타깃 48px</li><li>퍼널 계측 + A/B(즉시견적·진행저장)</li></ul></div>
+  </div>
+
+  <div class="sec" style="top:166mm">목표 KPI</div>
+  <div class="kpis" style="top:172mm">
+    <div class="kpi"><div class="v">+12%p</div><div class="l">가입 완료율</div></div>
+    <div class="kpi"><div class="v">+10%p</div><div class="l">견적→가입 전환</div></div>
+    <div class="kpi"><div class="v">−25%</div><div class="l">단계별 이탈율</div></div>
+    <div class="kpi"><div class="v">6</div><div class="l">재설계 화면</div></div>
+  </div>
+
+  <div class="proto" style="top:200mm">
+    <div class="t">▶ 동작 프로토타입</div>
+    <div class="d">상품소개 → 정보 → 견적·플랜 → 보장설정(실시간 가격) → 가입정보 → 결제·완료 — 6화면 시연</div>
+  </div>
+  <div class="foot"><span>ClubSchool AI OS · 별첨4 서비스 개선</span><span>2 / 2 · 펫보험</span></div>
+</div>
+</body>
+</html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>메리츠화재 RFP 분석 — 요약 디자인본</title>
+<meta name="hz:slide-selector" content=".page" />
+<meta name="hz:canvas-width" content="794" />
+<meta name="hz:canvas-height" content="1123" />
+<link rel="stylesheet" href="https://use.typekit.net/bzv3lqo.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{display:flex;flex-direction:column;align-items:center;gap:24px;background:#e9edf2;padding:24px;font-family:"source-han-sans-cjk-ko","Noto Sans KR",sans-serif}
+.page{position:relative;width:210mm;height:297mm;background:#fff;overflow:hidden;color:#1a1f2b}
+.bar{position:absolute;top:0;left:0;width:100%;height:7mm;background:linear-gradient(90deg,#c9102e,#7d0b1d)}
+.kick{position:absolute;top:16mm;left:18mm;font-size:9pt;letter-spacing:5px;color:#c9102e;font-weight:700}
+.h1{position:absolute;top:21mm;left:18mm;width:150mm;font-size:27pt;font-weight:900;line-height:1.2;color:#13161d}
+.org{position:absolute;top:17mm;right:18mm;text-align:right;font-size:8.5pt;color:#6a7488;line-height:1.8}
+.org b{color:#c9102e}
+.lede{position:absolute;left:18mm;width:140mm;font-size:10.5pt;color:#5a6373;line-height:1.6}
+.sec{position:absolute;left:18mm;font-size:9pt;letter-spacing:2px;color:#8a93a6;font-weight:700;text-transform:uppercase}
+.grid2{position:absolute;left:18mm;width:174mm;display:flex;gap:5mm}
+.box{flex:1;background:#fafbfc;border:1px solid #e6e9ef;border-radius:4mm;padding:5mm}
+.box h4{font-size:10.5pt;color:#13161d;font-weight:700;margin-bottom:2.5mm}
+.box ul{list-style:none;font-size:8.7pt;color:#4a5363;line-height:1.7}
+.box li{padding-left:4mm;position:relative;margin-bottom:0.6mm}
+.box li::before{content:"";position:absolute;left:0;top:2.4mm;width:1.6mm;height:1.6mm;border-radius:50%;background:#c9102e}
+.evrow{position:absolute;left:18mm;width:174mm;display:flex;align-items:center;gap:4mm;font-size:9pt}
+.evrow .name{width:42mm;color:#3a4250;font-weight:500}
+.evrow .track{flex:1;height:6mm;background:#f0f2f6;border-radius:2mm;overflow:hidden}
+.evrow .fill{height:100%;background:linear-gradient(90deg,#c9102e,#e86072);border-radius:2mm}
+.evrow .val{width:12mm;text-align:right;font-weight:900;color:#c9102e}
+.evrow.alt .fill{background:linear-gradient(90deg,#5a6373,#8a93a6)}.evrow.alt .val{color:#5a6373}
+.score{position:absolute;left:18mm;width:174mm;background:#13161d;border-radius:4mm;padding:5mm 7mm;display:flex;align-items:center;gap:7mm;color:#fff}
+.score .big{font-size:30pt;font-weight:900;color:#ff5a6e;line-height:1}.score .big span{font-size:12pt;color:#9aa2b1}
+.score .lab{font-size:8.7pt;color:#c3cad7;line-height:1.6}.score .lab b{color:#fff;font-size:10.5pt}
+.risk{position:absolute;left:18mm;width:174mm}
+.rrow{display:flex;align-items:center;gap:4mm;padding:2.6mm 0;border-bottom:1px solid #eef0f4;font-size:9pt}
+.rrow:last-child{border-bottom:0}
+.rrow .lv{width:16mm;font-weight:800;font-size:8pt;text-align:center;border-radius:2mm;padding:1mm 0;color:#fff}
+.rrow .lv.h{background:#c9102e}.rrow .lv.m{background:#e0922a}
+.rrow .rt{flex:1;color:#13161d;font-weight:600}
+.rrow .rd{flex:1.4;color:#6a7488;font-size:8.3pt}
+.tl{position:absolute;left:18mm;width:174mm;display:flex;justify-content:space-between;border-top:1px solid #e6e9ef;padding-top:6mm}
+.ph{flex:1;text-align:center;position:relative}
+.ph::before{content:"";position:absolute;top:-7.6mm;left:50%;transform:translateX(-50%);width:3mm;height:3mm;border-radius:50%;background:#c9102e}
+.ph .m{font-size:8.5pt;font-weight:700;color:#13161d}.ph .d{font-size:7pt;color:#8a93a6;margin-top:1mm}
+.foot{position:absolute;bottom:12mm;left:18mm;width:174mm;display:flex;justify-content:space-between;font-size:7.5pt;color:#9aa2b1;border-top:1px solid #e6e9ef;padding-top:4mm}
+</style>
+</head>
+<body>
+<div class="page" data-canvas-width="794" data-canvas-height="1123">
+  <div class="bar"></div>
+  <div class="kick">RFP ANALYSIS · 요약</div>
+  <div class="org">발주 <b>메리츠화재 TM사업부문</b><br>2025.1–2026.12 (2년)<br>평가 제안 80 : 가격 20</div>
+  <div class="h1">인터넷 마케팅 플랫폼<br>운영 RFP 분석</div>
+  <div class="lede" style="top:58mm">대표홈페이지·TM 마케팅 플랫폼의 기획·디자인·퍼블리싱 2년 운영. “상품 중심 → 사용자 중심” 전환이 발주처 명시 목표이며, 기술·조직 역량 비중이 절대적이다.</div>
+
+  <div class="sec" style="top:78mm">핵심 요구 분류</div>
+  <div class="grid2" style="top:84mm">
+    <div class="box"><h4>운영 범위 (R-001~010)</h4><ul><li>대표홈페이지(상품·공시실)</li><li>마케팅 플랫폼(광고·보장분석·챗봇)</li><li>다이렉트 보험 가입(실손·펫·운전자)</li><li>영업지원(METIS·Performance Lab)</li><li>인증·결제(토스/네이버/카카오/페이코)</li></ul></div>
+    <div class="box"><h4>컴플라이언스 (C-001~007)</h4><ul><li>인력 교체 시 단가 동일 이하</li><li>차기 사업자까지 용역 연속 수행</li><li>금융 보안 규정 성실 이행</li><li>최저임금 준수 단가</li><li>제안 30매·별첨4 6매 이내</li></ul></div>
+  </div>
+
+  <div class="sec" style="top:150mm">평가 배점 (제안 80 : 가격 20)</div>
+  <div class="evrow" style="top:156mm"><span class="name">조직 운영방안</span><span class="track"><span class="fill" style="width:100%"></span></span><span class="val">25</span></div>
+  <div class="evrow" style="top:165mm"><span class="name">직무 경험</span><span class="track"><span class="fill" style="width:80%"></span></span><span class="val">20</span></div>
+  <div class="evrow alt" style="top:174mm"><span class="name">가격</span><span class="track"><span class="fill" style="width:80%"></span></span><span class="val">20</span></div>
+  <div class="evrow" style="top:183mm"><span class="name">UI/UX 기획</span><span class="track"><span class="fill" style="width:60%"></span></span><span class="val">15</span></div>
+  <div class="evrow" style="top:192mm"><span class="name">업무 안정성</span><span class="track"><span class="fill" style="width:60%"></span></span><span class="val">15</span></div>
+  <div class="evrow" style="top:201mm"><span class="name">전문성</span><span class="track"><span class="fill" style="width:20%"></span></span><span class="val">5</span></div>
+
+  <div class="score" style="top:218mm">
+    <div class="big">88<span>/100</span></div>
+    <div class="lab"><b>자체 채점(G2 통과) · Bid/No-Bid 4축 72% — 참여 권고</b><br>추적성 100% · 컴플라이언스 누락 0 · 고아 요구 0건</div>
+  </div>
+  <div class="foot"><span>ClubSchool AI OS · RFP 분석 패키지</span><span>1 / 2 · GoldWiki = SSOT</span></div>
+</div>
+
+<div class="page" data-canvas-width="794" data-canvas-height="1123">
+  <div class="bar"></div>
+  <div class="kick">PAIN · WIN · RISK</div>
+  <div class="h1" style="font-size:22pt;top:19mm">고객 과제 · 윈테마 · 리스크</div>
+
+  <div class="sec" style="top:40mm">고객 Pain Point</div>
+  <div class="grid2" style="top:46mm">
+    <div class="box"><h4>해결하려는 문제</h4><ul><li>전환율·이탈율 정체(보장분석·펫보험)</li><li>상품 중심 → 사용자 중심 전환</li><li>운영 품질의 지속성·안정성</li><li>데이터 기반 성과 측정 미흡</li></ul></div>
+    <div class="box"><h4>윈테마 (대응)</h4><ul><li>WT1 성과를 만드는 운영(KPI·A/B)</li><li>WT2 무중단 연속성(백업·SOP)</li><li>WT3 사용자 중심 금융 UX</li><li>WT4 신뢰 가능한 금융 파트너</li></ul></div>
+  </div>
+
+  <div class="sec" style="top:108mm">핵심 리스크 (High)</div>
+  <div class="risk" style="top:114mm">
+    <div class="rrow"><span class="lv h">HIGH</span><span class="rt">가격 경쟁</span><span class="rd">차순위 −5점 누적 → 2위 이내 가격 + 기술 우위</span></div>
+    <div class="rrow"><span class="lv h">HIGH</span><span class="rt">인력 연속성</span><span class="rd">2년+연장 → 백업 풀·지식 이관 SOP</span></div>
+    <div class="rrow"><span class="lv h">HIGH</span><span class="rt">단가 동결</span><span class="rd">2년+α 원가 부담 → 보수적 단가 설계</span></div>
+    <div class="rrow"><span class="lv m">MED</span><span class="rt">금융 보안·개인정보</span><span class="rd">본인인증·보장분석 데이터 → 접근통제·감사</span></div>
+    <div class="rrow"><span class="lv m">MED</span><span class="rt">포괄 조항 범위 확장</span><span class="rd">R-010 → MM 기반 업무량 합의·변경관리</span></div>
+  </div>
+
+  <div class="sec" style="top:170mm">수행 일정 (운영 사이클)</div>
+  <div class="tl" style="top:180mm">
+    <div class="ph"><div class="m">인수인계</div><div class="d">D-14~착수</div></div>
+    <div class="ph"><div class="m">안정화</div><div class="d">M1–M3</div></div>
+    <div class="ph"><div class="m">정상 운영·개선</div><div class="d">M4–M24</div></div>
+    <div class="ph"><div class="m">분기 평가</div><div class="d">분기말</div></div>
+    <div class="ph"><div class="m">연속 이관</div><div class="d">계약 말</div></div>
+  </div>
+
+  <div class="grid2" style="top:205mm">
+    <div class="box"><h4>즉시 액션</h4><ul><li>Q&A로 범위·MM 조정 기준 확인</li><li>별첨4: 보장분석+펫 2과제 확정</li><li>별첨3 핵심 인력 금융 경력 정리</li><li>원가 모델 → 가격 포지션 결정</li></ul></div>
+    <div class="box"><h4>다음 단계</h4><ul><li>제안서 본문(필수 목차)</li><li>별첨4 화면설계 + 동작 프로토타입</li><li>PT 30분 자료 구성</li></ul></div>
+  </div>
+  <div class="foot"><span>ClubSchool AI OS · RFP 분석 패키지</span><span>2 / 2</span></div>
+</div>
+</body>
+</html>
