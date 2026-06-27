@@ -3,124 +3,40 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ClubSchool AI OS — 콘솔</title>
-  <script>/* 테마 조기 적용 — 화면 깜빡임 방지 */try{var _t=localStorage.getItem('cs.theme')||'dark';document.documentElement.setAttribute('data-theme',_t);}catch(e){}</script>
-  <link rel="stylesheet" href="styles.css?v=157" />
+  <title>ClubSchool AI OS — 산출물</title>
+  <script>try{document.documentElement.setAttribute('data-theme',localStorage.getItem('cs.theme')||'light');}catch(e){}</script>
+  <link rel="stylesheet" href="styles.css?v=200" />
 </head>
-<body>
-  <div id="app">
-    <!-- 모바일 드로어 배경(스크림) -->
-    <div id="scrim" class="scrim hidden"></div>
-    <!-- 사이드바 -->
-    <aside class="sidebar">
-      <div class="brand">
-        <div class="brand-mark">CS</div>
-        <div class="brand-text">
-          <strong>ClubSchool AI OS</strong>
-          <span id="version-tag">콘솔 v1.0</span>
-        </div>
-      </div>
-      <nav class="nav">
-        <button class="nav-item active" data-view="dashboard"><span class="nav-ico">🏠</span><span class="nav-label">대시보드</span></button>
-        <button class="nav-item" data-view="pipeline"><span class="nav-ico">🚀</span><span class="nav-label">자동 파이프라인</span></button>
-        <button class="nav-item" data-view="agents"><span class="nav-ico">🤖</span><span class="nav-label">에이전트</span></button>
-        <button class="nav-item" data-view="commands"><span class="nav-ico">⌘</span><span class="nav-label">커맨드</span></button>
-        <button class="nav-item" data-view="workflows"><span class="nav-ico">🔀</span><span class="nav-label">워크플로우</span></button>
-        <button class="nav-item" data-view="goldwiki"><span class="nav-ico">📘</span><span class="nav-label">Gold Wiki</span></button>
-        <button class="nav-item" data-view="templates"><span class="nav-ico">📄</span><span class="nav-label">템플릿</span></button>
-        <button class="nav-item" data-view="examples"><span class="nav-ico">📦</span><span class="nav-label">산출물 예시</span></button>
-        <button class="nav-item" data-view="youtube"><span class="nav-ico">🎬</span><span class="nav-label">유튜브 인사이트</span></button>
-        <button class="nav-item" data-view="deliverables"><span class="nav-ico">🗂️</span><span class="nav-label">내 산출물</span></button>
-        <button class="nav-item" data-view="qa"><span class="nav-ico">✅</span><span class="nav-label">품질 검증</span></button>
-        <button class="nav-item" data-view="settings"><span class="nav-ico">⚙️</span><span class="nav-label">설정</span></button>
-      </nav>
-      <div class="sidebar-foot">
-        <div id="conn-state" class="conn-pill conn-off" title="API 연결 상태">● 프롬프트 모드</div>
-        <div id="user-state" class="user-state hidden"></div>
-        <small>GoldWiki = 단일 진실 공급원</small>
-      </div>
-    </aside>
-
-    <!-- 메인 -->
-    <main class="main">
-      <header class="topbar">
-        <button id="btn-menu" class="iconbtn menu-btn" aria-label="메뉴 열기">☰</button>
-        <input id="global-search" class="search" type="search" placeholder="에이전트 · 문서 · 커맨드 검색…" />
-        <div class="topbar-actions">
-          <button id="btn-theme" class="iconbtn theme-btn" aria-label="테마 전환" title="다크/라이트 전환">🌙</button>
-          <button id="btn-quickstart" class="btn ghost">빠른 시작</button>
-          <button id="btn-settings" class="btn">설정</button>
-        </div>
-      </header>
-      <section id="view" class="view"><!-- 동적 렌더 --></section>
-    </main>
-
-    <!-- 우측 작업 패널 (대화/실행) -->
-    <aside id="workpanel" class="workpanel hidden">
-      <div class="wp-head">
-        <div>
-          <div id="wp-title" class="wp-title">에이전트 대화</div>
-          <div id="wp-sub" class="wp-sub"></div>
-        </div>
-        <button id="wp-close" class="iconbtn" aria-label="닫기">✕</button>
-      </div>
-      <div id="wp-messages" class="wp-messages"></div>
-      <div class="wp-compose">
-        <div id="wp-files"></div>
-        <textarea id="wp-input" rows="3" placeholder="작업 내용을 입력하거나, 파일을 드래그&드롭 하세요. 예: 첨부한 RFP를 분석해 핵심 요구사항과 평가기준을 추출해줘."></textarea>
-        <div class="wp-compose-row">
-          <button id="wp-attach" class="btn ghost upload" title="파일 첨부 (PDF·DOCX·TXT·MD·CSV)">📎 파일</button>
-          <label class="chk"><input type="checkbox" id="wp-usewiki" checked /> GoldWiki 참조</label>
-          <div class="spacer"></div>
-          <button id="wp-copy" class="btn ghost" title="실행 프롬프트 복사">프롬프트 복사</button>
-          <button id="wp-send" class="btn primary">전송</button>
-        </div>
-      </div>
-    </aside>
-  </div>
-
-  <!-- 로그인/회원가입 게이트 (Supabase 설정 시 표시) -->
-  <div id="auth-gate" class="auth-gate hidden">
-    <div class="auth-card">
-      <div class="auth-brand"><div class="brand-mark">CS</div><strong>ClubSchool AI OS</strong></div>
-
-      <!-- 모드 탭 -->
-      <div class="auth-tabs">
-        <button id="tab-login" class="auth-tab active" type="button">로그인</button>
-        <button id="tab-signup" class="auth-tab" type="button">회원가입</button>
-      </div>
-
-      <!-- 입력 폼 -->
-      <div id="auth-form">
-        <p id="auth-sub" class="auth-sub">계정에 로그인하세요.</p>
-        <input id="auth-email" type="email" placeholder="이메일" autocomplete="email" />
-        <input id="auth-pass" type="password" placeholder="비밀번호 (6자 이상)" autocomplete="current-password" />
-        <div id="auth-msg" class="auth-msg"></div>
-        <button id="auth-submit" class="btn primary auth-submit" type="button">로그인</button>
-      </div>
-
-      <!-- 회원가입 완료(이메일 인증 필요) 상태 -->
-      <div id="auth-done" class="auth-done hidden">
-        <div class="auth-done-icon">✉️</div>
-        <p class="auth-done-title">가입이 거의 끝났어요!</p>
-        <p class="auth-done-text"><b id="auth-done-email"></b> 로 보낸 인증 메일의 링크를 클릭한 뒤 로그인하세요.</p>
-        <button id="auth-back" class="btn primary auth-submit" type="button">로그인하러 가기</button>
-      </div>
-
-      <button id="auth-skip" class="btn ghost auth-skip" type="button">로그인 없이 둘러보기</button>
+<body class="gallery-body">
+  <header class="g-top">
+    <div class="g-brand">
+      <div class="brand-mark">CS</div>
+      <div class="g-brand-t"><strong>ClubSchool AI OS</strong><span>산출물 쇼룸</span></div>
     </div>
+    <div class="g-top-actions">
+      <button id="g-theme" class="iconbtn" title="다크/라이트 전환" aria-label="테마">🌙</button>
+    </div>
+  </header>
+
+  <main id="g-main" class="g-main"><!-- 갤러리 렌더 --></main>
+
+  <!-- 산출물 뷰어 (전체화면 오버레이) -->
+  <div id="g-viewer" class="g-viewer hidden">
+    <div class="g-viewer-bar">
+      <button id="gv-back" class="btn ghost">‹ 목록</button>
+      <div id="gv-title" class="gv-title"></div>
+      <div id="gv-exports" class="gv-exports"></div>
+    </div>
+    <div id="gv-body" class="g-viewer-body"></div>
   </div>
 
-  <!-- 토스트 -->
   <div id="toast" class="toast hidden"></div>
 
-  <!-- 마크다운 렌더러 (로컬 벤더링 — 오프라인 동작, 실패 시 최소 렌더 폴백) -->
   <script src="vendor/marked.umd.js"></script>
   <script src="vendor/purify.min.js"></script>
   <script src="vendor/xlsx.full.min.js"></script>
   <script src="vendor/pptxgen.bundle.js"></script>
-  <script src="export.js?v=157"></script>
-  <script src="supabase.js?v=157"></script>
-  <script src="app.js?v=157"></script>
+  <script src="export.js?v=200"></script>
+  <script src="gallery.js?v=200"></script>
 </body>
 </html>
