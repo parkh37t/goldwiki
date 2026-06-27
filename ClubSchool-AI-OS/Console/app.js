@@ -170,6 +170,8 @@ function wireChrome() {
   $('#btn-settings').onclick = () => { go('settings'); closeDrawer(); };
   $('#btn-quickstart').onclick = quickStart;
   $('#btn-menu').onclick = toggleDrawer;
+  $('#btn-theme').onclick = toggleTheme;
+  applyTheme(localStorage.getItem('cs.theme') || 'dark');
   $('#scrim').onclick = closeDrawer;
   $('#wp-close').onclick = closePanel;
   $('#wp-send').onclick = sendMessage;
@@ -178,8 +180,91 @@ function wireChrome() {
   $('#wp-input').addEventListener('keydown', e => {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) sendMessage();
   });
+  const wpUpload = attachUpload($('#wp-input'), $('#wp-files'));
+  $('#wp-attach').onclick = () => wpUpload.click();
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
   document.addEventListener('click', onDocLinkClick); // 내부 .md 링크 가로채기
+}
+
+/* 다크/라이트 테마 */
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  const b = $('#btn-theme'); if (b) { b.textContent = t === 'light' ? '☀️' : '🌙'; b.title = t === 'light' ? '다크 모드로' : '라이트 모드로'; }
+}
+function toggleTheme() {
+  const next = (localStorage.getItem('cs.theme') || 'dark') === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('cs.theme', next); applyTheme(next);
+}
+
+/* ---------- 파일 업로드 (RFP/관련 문서 → 텍스트 추출) ---------- */
+const UPLOAD_TEXT_EXT = ['.txt', '.md', '.markdown', '.json', '.csv', '.tsv', '.html', '.htm', '.xml', '.yaml', '.yml', '.log', '.rtf'];
+async function readFileToText(file) {
+  const name = (file.name || '').toLowerCase();
+  if (file.size > 25 * 1024 * 1024) throw new Error('파일이 너무 큽니다(25MB 초과).');
+  if (UPLOAD_TEXT_EXT.some(e => name.endsWith(e)) || (file.type || '').startsWith('text/')) return await file.text();
+  if (name.endsWith('.pdf')) return await extractPdfText(file);
+  if (name.endsWith('.docx')) return await extractDocxText(file);
+  if (name.endsWith('.doc') || name.endsWith('.hwp') || name.endsWith('.hwpx'))
+    throw new Error(`${name.split('.').pop().toUpperCase()} 형식은 브라우저에서 직접 읽을 수 없습니다. PDF로 저장하거나 텍스트를 복사해 붙여넣어 주세요.`);
+  // 알 수 없는 형식은 텍스트로 시도
+  try { return await file.text(); } catch { throw new Error('지원하지 않는 형식입니다. .pdf .docx .txt .md .csv .json 또는 텍스트 붙여넣기를 사용하세요.'); }
+}
+async function extractPdfText(file) {
+  // pdf.js 를 CDN에서 지연 로드 (사용자 브라우저에서 추출 · 서버/API 미사용)
+  const pdfjs = await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.min.mjs');
+  pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.worker.min.mjs';
+  const data = new Uint8Array(await file.arrayBuffer());
+  const pdf = await pdfjs.getDocument({ data }).promise;
+  const pages = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const tc = await page.getTextContent();
+    pages.push(tc.items.map(it => it.str).join(' '));
+  }
+  const text = pages.join('\n\n').trim();
+  if (!text) throw new Error('PDF에서 텍스트를 찾지 못했습니다(스캔 이미지일 수 있음). 텍스트 PDF를 사용하거나 내용을 붙여넣어 주세요.');
+  return text;
+}
+async function extractDocxText(file) {
+  const mammoth = await import('https://cdn.jsdelivr.net/npm/mammoth@1.8.0/+esm');
+  const res = await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() });
+  return (res.value || '').trim();
+}
+/* 텍스트영역에 업로드(버튼+드래그앤드롭) 부착. opts.append=true면 기존 내용에 덧붙임 */
+function attachUpload(textarea, chipHost, opts = {}) {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = '.pdf,.docx,.txt,.md,.markdown,.json,.csv,.tsv,.html,.htm,.xml,.yaml,.yml,.log,.rtf';
+  input.multiple = true; input.style.display = 'none';
+  document.body.appendChild(input);
+  const ingest = async (files) => {
+    for (const f of files) {
+      const chip = document.createElement('span'); chip.className = 'file-chip';
+      chip.innerHTML = `<span>📎 ${esc(f.name)} · 읽는 중…</span>`;
+      if (chipHost) chipHost.appendChild(chip);
+      try {
+        const text = await readFileToText(f);
+        const header = `\n\n===== 첨부파일: ${f.name} =====\n`;
+        textarea.value = (textarea.value.trim() ? textarea.value + header : `===== 첨부파일: ${f.name} =====\n`) + text;
+        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+        chip.innerHTML = `<span>📎 ${esc(f.name)} · ${text.length.toLocaleString()}자</span><button title="이 입력 비우기" type="button">✕</button>`;
+        chip.querySelector('button').onclick = () => chip.remove();
+        toast(`"${f.name}" 불러옴 (${text.length.toLocaleString()}자)`);
+      } catch (e) {
+        chip.innerHTML = `<span>⚠ ${esc(f.name)}: ${esc(e.message)}</span><button type="button">✕</button>`;
+        chip.querySelector('button').onclick = () => chip.remove();
+        toast('불러오기 실패: ' + e.message, 3500);
+      }
+    }
+    input.value = '';
+  };
+  input.onchange = () => ingest([...input.files]);
+  // 드래그앤드롭
+  textarea.classList.add('upload-drop');
+  const stop = e => { e.preventDefault(); e.stopPropagation(); };
+  ['dragenter', 'dragover'].forEach(ev => textarea.addEventListener(ev, e => { stop(e); textarea.classList.add('dragover'); }));
+  ['dragleave', 'dragend', 'drop'].forEach(ev => textarea.addEventListener(ev, e => { stop(e); textarea.classList.remove('dragover'); }));
+  textarea.addEventListener('drop', e => { if (e.dataTransfer && e.dataTransfer.files.length) ingest([...e.dataTransfer.files]); });
+  return input; // 트리거: input.click()
 }
 
 /* 모바일 드로어(사이드바) 토글 */
@@ -311,8 +396,10 @@ function plRun() {
   const host = $('#pl-body');
   host.innerHTML = `
     <p style="color:var(--muted);margin:0 0 12px"><b>API 키 없이</b> 실행하는 방법입니다. 아래에 RFP를 붙여넣고 <b>실행 프롬프트 생성</b>을 누르면, Claude Code(구독·과금 아님)에 붙여넣어 자동 실행할 패키지를 만들어 드립니다.</p>
-    <textarea id="pl-rfp" rows="10" placeholder="여기에 RFP 전문 또는 사업 개요를 붙여넣으세요. (예: 발주기관·예산·기간·주요 요구사항·평가기준)" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:12px;font-family:inherit;font-size:13px"></textarea>
+    <textarea id="pl-rfp" rows="10" placeholder="여기에 RFP 전문 또는 사업 개요를 붙여넣으세요. (예: 발주기관·예산·기간·주요 요구사항·평가기준) — 또는 파일을 드래그&드롭 / 📎 파일 첨부" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:12px;font-family:inherit;font-size:13px;background:var(--surface);color:var(--ink)"></textarea>
+    <div id="pl-files"></div>
     <div style="display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap">
+      <button class="btn ghost upload" id="pl-attach" type="button" title="RFP/관련 파일 첨부 (PDF·DOCX·TXT·MD·CSV)">📎 파일 업로드</button>
       <button class="btn primary" id="pl-auto" type="button">▶ 지금 브라우저에서 자동 실행</button>
       <button class="btn" id="pl-gen" type="button">실행 프롬프트만 복사</button>
       <span id="pl-engine-hint" style="color:var(--muted);font-size:12px"></span>
@@ -322,8 +409,10 @@ function plRun() {
       <b>왜 API가 필요 없나요?</b> 브라우저는 <u>오케스트레이션 프롬프트</u>만 만들고, 실제 생성·검증은 이미 구독 중인 <b>Claude Code</b>가 수행합니다(에이전트 24명·GoldWiki 표준 그대로). 토큰 과금이 발생하는 별도 API를 쓰지 않습니다.
     </div>`;
   const mode = chatMode();
-  const hint = { ollama: '엔진: 🟢 로컬 Ollama (무료)', server: '엔진: 서버', direct: '엔진: 내 API 키', prompt: '⚠ 자동 실행하려면 설정에서 로컬 Ollama를 켜세요' }[mode];
+  const hint = { ollama: '엔진: 🟢 로컬 Ollama (무료)', server: '엔진: 서버', direct: '엔진: 내 API 키', prompt: '⚠ 자동 실행하려면 설정에서 내 API 키 또는 Ollama를 설정하세요' }[mode];
   $('#pl-engine-hint').textContent = hint;
+  const plUpload = attachUpload($('#pl-rfp'), $('#pl-files'));
+  $('#pl-attach').onclick = () => plUpload.click();
   $('#pl-gen').onclick = () => {
     const rfp = $('#pl-rfp').value.trim();
     if (!rfp) { toast('RFP 내용을 붙여넣으세요.'); return; }
