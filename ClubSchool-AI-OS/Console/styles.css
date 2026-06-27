@@ -347,3 +347,15 @@ body{font-family:var(--sans);color:var(--ink);background:var(--bg);font-size:14p
 .g-card-b p{margin:0;color:var(--muted);font-size:12.6px;line-height:1.5;min-height:38px}
 .g-card-b .g-card-act{margin-top:2px}
 .g-card-b .btn{width:100%;justify-content:center;text-align:center}
+
+/* 갤러리 검색/필터 */
+.g-controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:22px 0 4px}
+.g-search{flex:1;min-width:200px;max-width:420px;padding:10px 14px;border:1px solid var(--line);border-radius:999px;font-size:13.5px;background:var(--surface);color:var(--ink);font-family:inherit}
+.g-search::placeholder{color:var(--faint)}
+.g-search:focus{outline:none;border-color:var(--gold-2);box-shadow:0 0 0 3px var(--gold-soft)}
+.g-filters{display:flex;gap:6px;flex-wrap:wrap}
+.g-filter{border:1px solid var(--line);background:var(--surface);color:var(--muted);padding:8px 14px;border-radius:999px;cursor:pointer;font-size:12.5px;font-weight:600;font-family:inherit}
+.g-filter:hover{color:var(--ink);border-color:var(--line-2)}
+.g-filter.on{background:linear-gradient(135deg,var(--gold),var(--gold-deep));color:#1b1500;border-color:transparent}
+[data-theme="light"] .g-filter.on{color:#fff}
+.g-empty{text-align:center;color:var(--muted);padding:50px;font-size:14px}

@@ -15,6 +15,14 @@ function toast(msg, ms = 2200) {
 /* 큐레이션된 산출물 목록 */
 const GROUPS = [
   {
+    name: '엠배서더호텔 그룹 — 홈페이지 재구축',
+    tag: '제안 분석 · 대외비',
+    items: [
+      { icon: '🏨', title: 'RFP 분석 (디자인본)', desc: 'D2C·부킹엔진·클라우드·보안 — 요구·리스크·일정·Bid 권고(70%).', kind: 'design', path: 'Examples/Ambassador_RFP_Brief.html', thumb: 'thumbs/amb-rfp.png' },
+      { icon: '📋', title: 'RFP 분석 패키지', desc: 'FNR 11영역·NFR·리스크 레지스터·WBS·임원 요약.', kind: 'md', path: 'Examples/Ambassador_RFP_Analysis.md', thumb: 'thumbs/amb-analysis.png' },
+    ],
+  },
+  {
     name: '메리츠화재 — 인터넷 마케팅 플랫폼 운영 제안',
     tag: '제안 패키지',
     items: [
@@ -62,15 +70,47 @@ function renderGallery() {
     <h1>산출물 쇼룸</h1>
     <p>ClubSchool AI OS가 만든 산출물을 열람하고 <b>PDF·PPTX·DOCX</b>로 내려받을 수 있습니다. 설치·로그인 없이 바로 사용하세요.</p>
   </section>`;
+  const controls = `<div class="g-controls">
+    <input id="g-search" class="g-search" type="search" placeholder="산출물 검색…" />
+    <div class="g-filters">
+      ${[['all', '전체'], ['design', '디자인'], ['md', '문서'], ['proto', '프로토타입']].map(([k, l], i) =>
+        `<button class="g-filter${i === 0 ? ' on' : ''}" data-kind="${k}">${l}</button>`).join('')}
+    </div>
+  </div>`;
   const groups = GROUPS.map(g => `
-    <section class="g-group">
+    <section class="g-group" data-group>
       <div class="g-group-head"><h2>${esc(g.name)}</h2><span class="g-tag">${esc(g.tag)}</span></div>
       <div class="g-cards">
         ${g.items.map((it, i) => cardHtml(g, i, it)).join('')}
       </div>
     </section>`).join('');
-  m.innerHTML = hero + groups;
+  m.innerHTML = hero + controls + groups + '<div id="g-empty" class="g-empty hidden">검색 결과가 없습니다.</div>';
   m.querySelectorAll('[data-open]').forEach(b => b.onclick = () => openItem(JSON.parse(b.dataset.open)));
+  // 검색/필터 와이어
+  $('#g-search').addEventListener('input', applyFilter);
+  m.querySelectorAll('.g-filter').forEach(b => b.onclick = () => {
+    m.querySelectorAll('.g-filter').forEach(x => x.classList.remove('on'));
+    b.classList.add('on'); applyFilter();
+  });
+}
+
+function applyFilter() {
+  const q = ($('#g-search') ? $('#g-search').value : '').trim().toLowerCase();
+  const kindBtn = document.querySelector('.g-filter.on');
+  const kind = kindBtn ? kindBtn.dataset.kind : 'all';
+  let shown = 0;
+  document.querySelectorAll('.g-card').forEach(card => {
+    const text = (card.dataset.text || '').toLowerCase();
+    const k = card.dataset.kind || '';
+    const ok = (kind === 'all' || k === kind) && (!q || text.includes(q));
+    card.classList.toggle('hidden', !ok);
+    if (ok) shown++;
+  });
+  document.querySelectorAll('.g-group[data-group]').forEach(g => {
+    const any = [...g.querySelectorAll('.g-card')].some(c => !c.classList.contains('hidden'));
+    g.classList.toggle('hidden', !any);
+  });
+  const empty = $('#g-empty'); if (empty) empty.classList.toggle('hidden', shown > 0);
 }
 function badge(kind) { return { md: '문서', design: '디자인', proto: '프로토타입' }[kind] || ''; }
 function primaryLabel(kind) { return { md: '보기', design: '열기', proto: '실행 ▶' }[kind] || '열기'; }
@@ -79,7 +119,7 @@ function cardHtml(g, i, it) {
   const thumb = it.thumb
     ? `<img src="${esc(it.thumb)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'"><span class="g-thumb-fallback" style="display:none">${it.icon}</span>`
     : `<span class="g-thumb-fallback" style="display:grid">${it.icon}</span>`;
-  return `<div class="g-card">
+  return `<div class="g-card" data-kind="${esc(it.kind)}" data-text="${esc(it.title + ' ' + it.desc)}">
     <div class="g-thumb">${thumb}<span class="g-kind">${badge(it.kind)}</span></div>
     <div class="g-card-b">
       <h3>${esc(it.title)}</h3>
