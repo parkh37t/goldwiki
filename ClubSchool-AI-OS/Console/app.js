@@ -674,11 +674,16 @@ function onDocLinkClick(e) {
   if (!a) return;
   const href = a.getAttribute('href') || '';
   if (/^(https?:|mailto:|tel:|#)/i.test(href)) return;     // 외부/앵커는 그대로
-  if (!/\.md($|[?#])/i.test(href)) return;                  // .md 링크만 가로채기
   const md = a.closest('.md');
   if (!md) return;
-  e.preventDefault();
   const target = resolveRel(md.getAttribute('data-base') || '', href);
+  if (/\.html?($|[?#])/i.test(href)) {                      // .html 프로토타입 등 → 새 탭
+    e.preventDefault();
+    window.open(docUrl(target), '_blank', 'noopener');
+    return;
+  }
+  if (!/\.md($|[?#])/i.test(href)) return;                  // 그 외 비-.md는 기본 동작
+  e.preventDefault();
   openAnyDoc(target);
 }
 async function openAnyDoc(path, title) {
