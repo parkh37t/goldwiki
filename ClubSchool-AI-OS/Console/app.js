@@ -287,6 +287,7 @@ function chatMode() {
   // 'server'  : 백엔드 프록시 사용 (서버에 키 있음) — 'auto' 선택 시에만
   // 'direct'  : 브라우저에서 직접 Anthropic 호출 (콘솔 설정에 키 있음)
   const e = S.settings.engine || 'prompt';   // 기본: Claude 구독으로 실행(프롬프트 복사 → Claude Code), API 과금 0
+  if (e === 'bridge') return (S.settings.bridgeUrl || '').trim() ? 'bridge' : 'prompt';  // 로컬 Claude Code 브리지(구독)
   if (e === 'ollama') return (S.settings.ollamaUrl || '').trim() ? 'ollama' : 'prompt';
   if (e === 'direct') return S.settings.apiKey ? 'direct' : 'prompt';   // 내 토큰
   if (e === 'auto') {                          // 'API 자동' 선택 시: 내 키 우선, 없으면 서버 키
@@ -298,7 +299,7 @@ function chatMode() {
 function refreshConn() {
   const mode = chatMode();
   const el = $('#conn-state');
-  const label = { ollama: '● 로컬 Ollama', server: '● 서버 연결됨', direct: '● API 연결됨', prompt: '● 구독 모드(프롬프트)' }[mode];
+  const label = { bridge: '● Claude Code 브리지(구독)', ollama: '● 로컬 Ollama', server: '● 서버 연결됨', direct: '● API 연결됨', prompt: '● 구독 모드(프롬프트)' }[mode];
   el.textContent = label;
   el.className = 'conn-pill ' + (mode === 'prompt' ? 'conn-off' : 'conn-on');
 }
@@ -409,7 +410,7 @@ function plRun() {
       <b>왜 API가 필요 없나요?</b> 브라우저는 <u>오케스트레이션 프롬프트</u>만 만들고, 실제 생성·검증은 이미 구독 중인 <b>Claude Code</b>가 수행합니다(에이전트 24명·GoldWiki 표준 그대로). 토큰 과금이 발생하는 별도 API를 쓰지 않습니다.
     </div>`;
   const mode = chatMode();
-  const hint = { ollama: '엔진: 🟢 로컬 Ollama (무료)', server: '엔진: 서버', direct: '엔진: 내 API 키', prompt: '⚠ 자동 실행하려면 설정에서 내 API 키 또는 Ollama를 설정하세요' }[mode];
+  const hint = { bridge: '엔진: 🖥️ Claude Code 브리지 (내 구독)', ollama: '엔진: 🟢 로컬 Ollama (무료)', server: '엔진: 서버', direct: '엔진: 내 API 키', prompt: '⚠ 화면 내 자동 실행은 설정에서 "로컬 Claude Code 브리지"를 켜세요 (또는 아래 프롬프트 복사)' }[mode];
   $('#pl-engine-hint').textContent = hint;
   const plUpload = attachUpload($('#pl-rfp'), $('#pl-files'));
   $('#pl-attach').onclick = () => plUpload.click();
@@ -424,7 +425,7 @@ function plRun() {
   $('#pl-auto').onclick = () => {
     const rfp = $('#pl-rfp').value.trim();
     if (!rfp) { toast('RFP 내용을 붙여넣으세요.'); return; }
-    if (chatMode() === 'prompt') { toast('브라우저 자동 실행은 LLM 엔진이 필요합니다. 무API라면 왼쪽 "프롬프트 복사"로 실행하세요. (설정에서 Ollama/서버 선택 시 자동 실행)'); return; }
+    if (chatMode() === 'prompt') { toast('화면 내 자동 실행은 "로컬 Claude Code 브리지"(설정)가 필요합니다. 설치 없이 쓰려면 옆의 "실행 프롬프트만 복사" → Claude Code에 붙여넣으세요.'); return; }
     plAutoRun(rfp);
   };
 }
@@ -560,7 +561,7 @@ async function openAgent(a) {
   S.chat = [];
   openPanel(a.name, '에이전트 · ' + a.path);
   const m = chatMode();
-  const how = { server: '서버를 통해 바로 응답합니다.', direct: '브라우저에서 바로 응답합니다.', prompt: '실행 프롬프트를 만들어 드립니다(서버에 키 설정 또는 설정에서 키 입력 시 직접 대화).' }[m];
+  const how = { bridge: '내 Claude 구독(로컬 브리지)으로 화면에서 바로 응답합니다.', ollama: '로컬 Ollama로 화면에서 바로 응답합니다.', server: '서버를 통해 바로 응답합니다.', direct: '내 API 키로 화면에서 바로 응답합니다.', prompt: '실행 프롬프트를 만들어 드립니다 — Claude Code에 붙여넣어 내 구독으로 실행하세요(API 과금 0).' }[m] || '실행 프롬프트를 만들어 드립니다.';
   pushSys(`이 패널은 **${a.name}** 에이전트입니다. 작업을 입력하면 ${how}\n\n에이전트 정의는 GoldWiki를 단일 진실 공급원으로 따릅니다.`);
 }
 
@@ -780,12 +781,24 @@ function viewSettings(V) {
   <div class="form">
     <label>응답 엔진 <span class="hint">에이전트 대화·자동 파이프라인을 무엇으로 구동할지</span></label>
     <select id="set-engine">
-      <option value="prompt" ${(s.engine || 'prompt') === 'prompt' ? 'selected' : ''}>🆓 Claude 구독으로 실행 — 프롬프트 복사 → Claude Code (권장 · API 과금 0원)</option>
+      <option value="bridge" ${s.engine === 'bridge' ? 'selected' : ''}>🖥️ 로컬 Claude Code 브리지 — 내 구독으로 화면에서 바로 대화 (API 과금 0원)</option>
+      <option value="prompt" ${(s.engine || 'prompt') === 'prompt' ? 'selected' : ''}>🆓 Claude 구독으로 실행 — 프롬프트 복사 → Claude Code (API 과금 0원)</option>
       <option value="ollama" ${s.engine === 'ollama' ? 'selected' : ''}>🟢 로컬 Ollama (무료 · 내 PC · 모바일 불가)</option>
       <option value="direct" ${s.engine === 'direct' ? 'selected' : ''}>🔑 Anthropic API 키 직접 (종량제 유료 · 구독과 별개)</option>
       <option value="auto" ${s.engine === 'auto' ? 'selected' : ''}>☁️ 서버 키 자동 (배포 서버에 설정된 키)</option>
     </select>
-    <div class="hint" style="margin-top:6px"><b>Claude.ai 구독(Pro/Max)</b>은 웹앱에서 직접 호출할 수 없습니다. 구독으로 쓰려면 <b>프롬프트 복사 → Claude Code에 붙여넣기</b>가 유일한 경로이며, 이때 <b>API 과금이 전혀 없습니다.</b></div>
+    <div class="hint" style="margin-top:6px"><b>내 Claude 구독(Pro/Max)으로 화면에서 바로 답을 받으려면</b> "🖥️ 로컬 Claude Code 브리지"를 쓰세요(내 PC에서 작은 서버 1회 실행). 설치가 번거로우면 "프롬프트 복사"로도 구독 실행이 가능합니다. 둘 다 <b>API 과금 0원</b>입니다.</div>
+
+    <div style="background:rgba(91,140,255,.07);border:1px solid rgba(91,140,255,.28);border-radius:10px;padding:14px;margin:14px 0">
+      <label style="margin-top:0">🖥️ 로컬 Claude Code 브리지 주소 <span class="hint">내 구독으로 실행 · localhost에서만 동작</span></label>
+      <input id="set-bridge-url" placeholder="http://localhost:8765" value="${esc(s.bridgeUrl || 'http://localhost:8765')}" />
+      <div class="row" style="margin-top:8px">
+        <div style="flex:2"><label>모델 <span class="hint">비우면 Claude Code 기본</span></label><input id="set-bridge-model" placeholder="(기본)" value="${esc(s.bridgeModel || '')}" /></div>
+        <div style="flex:1;display:flex;align-items:flex-end"><button class="btn" id="set-bridge-test" type="button" style="width:100%">연결 테스트</button></div>
+      </div>
+      <div id="set-bridge-status" class="hint" style="margin-top:8px"></div>
+      <div class="hint" style="margin-top:6px">내 PC에서 실행: <code>python3 server/claude-bridge.py</code> · 사전 준비(Claude Code 설치+구독 로그인)는 <a href="../Docs/CLAUDE_BRIDGE.md">Docs/CLAUDE_BRIDGE.md</a></div>
+    </div>
 
     <details style="margin-top:8px">
       <summary style="cursor:pointer;font-weight:600;font-size:13px;color:var(--muted)">고급: Anthropic API 키 직접 입력 (종량제 — 구독과 무관)</summary>
@@ -820,6 +833,25 @@ function viewSettings(V) {
       <button class="btn ghost" id="set-clear">키 삭제</button>
     </div>
   </div>`;
+  $('#set-bridge-test').onclick = async () => {
+    const url = ($('#set-bridge-url').value || '').trim().replace(/\/+$/, '');
+    const st = $('#set-bridge-status'); st.style.color = 'var(--muted)'; st.textContent = '연결 시도 중…';
+    try {
+      const r = await fetch(url + '/api/health');
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const d = await r.json();
+      if (d.ok && d.claude) {
+        st.style.color = 'var(--ok)';
+        st.innerHTML = '✅ 브리지 연결됨 · Claude Code 감지됨. 모델: ' + esc(d.model || '기본') + '. 이제 엔진을 "🖥️ 로컬 Claude Code 브리지"로 두고 저장하면 화면에서 바로 대화됩니다.';
+      } else {
+        st.style.color = 'var(--warn)';
+        st.innerHTML = '⚠️ 브리지는 떴지만 Claude Code(claude)를 못 찾았습니다. ' + esc(d.hint || 'Claude Code 설치 후 한 번 로그인하세요.');
+      }
+    } catch (e) {
+      st.style.color = 'var(--err)';
+      st.innerHTML = '⚠️ 연결 실패: ' + esc(e.message) + ' — 내 PC에서 <code>python3 server/claude-bridge.py</code> 실행 여부를 확인하세요. (HTTPS 사이트에서 localhost 호출은 Chrome에서 허용됩니다)';
+    }
+  };
   $('#set-ollama-test').onclick = async () => {
     const url = ($('#set-ollama-url').value || '').trim().replace(/\/+$/, '');
     const st = $('#set-ollama-status'); st.style.color = 'var(--muted)'; st.textContent = '연결 시도 중…';
@@ -838,6 +870,8 @@ function viewSettings(V) {
   $('#set-save').onclick = () => {
     S.settings = Object.assign({}, S.settings, {
       engine: $('#set-engine').value,
+      bridgeUrl: $('#set-bridge-url').value.trim(),
+      bridgeModel: $('#set-bridge-model').value.trim(),
       ollamaUrl: $('#set-ollama-url').value.trim(),
       ollamaModel: $('#set-ollama-model').value.trim(),
       apiKey: ($('#set-key') ? $('#set-key').value.trim() : s.apiKey || ''),
@@ -1018,10 +1052,28 @@ async function sendMessage() {
 /* 통합 LLM 호출 — 현재 엔진(ollama/server/direct)으로 디스패치 */
 async function llmComplete(system, history) {
   const mode = chatMode();
+  if (mode === 'bridge') return callBridge(system, history);
   if (mode === 'ollama') return callOllama(system, history);
   if (mode === 'server') return callBackendRaw(system, history);
   if (mode === 'direct') return callAnthropicRaw(system, history);
-  throw new Error('실행 엔진이 없습니다. 설정에서 로컬 Ollama를 켜거나 API 키를 입력하세요.');
+  throw new Error('실행 엔진이 없습니다. 설정에서 로컬 Claude Code 브리지/Ollama를 켜거나 API 키를 입력하세요.');
+}
+
+/* 로컬 Claude Code 브리지 (내 Claude 구독 사용 · API 과금 0) */
+async function callBridge(system, history) {
+  const base = (S.settings.bridgeUrl || 'http://localhost:8765').trim().replace(/\/+$/, '');
+  let r;
+  try {
+    r = await fetch(base + '/api/chat', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ system, messages: history, model: S.settings.bridgeModel || '' }),
+    });
+  } catch (e) {
+    throw new Error(`Claude Code 브리지(${base})에 연결할 수 없습니다. 내 PC에서 'python3 server/claude-bridge.py'를 실행했는지 확인하세요. [${e.message}]`);
+  }
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.error || ('브리지 HTTP ' + r.status));
+  return d.text || '(빈 응답)';
 }
 
 /* 로컬 Ollama (무료, 내 PC) — OpenAI 호환 아님, 네이티브 /api/chat 사용 */
