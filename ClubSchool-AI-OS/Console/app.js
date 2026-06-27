@@ -277,7 +277,7 @@ function go(view) {
   $$('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.view === view));
   const V = $('#view');
   ({ dashboard: viewDashboard, pipeline: viewPipeline, agents: viewAgents, commands: viewCommands, workflows: viewWorkflows,
-     goldwiki: viewGoldwiki, templates: viewTemplates, examples: viewExamples, deliverables: viewDeliverables,
+     goldwiki: viewGoldwiki, templates: viewTemplates, examples: viewExamples, youtube: viewYoutube, deliverables: viewDeliverables,
      qa: viewQA, settings: viewSettings }[view] || viewDashboard)(V);
 }
 
@@ -604,6 +604,76 @@ function listDocsView(V, title, sub, items, labelKey) {
 function viewWorkflows(V) { listDocsView(V, '워크플로우', `핵심 워크플로우 ${S.manifest.workflows.length}개 런북.`, S.manifest.workflows, 'title'); }
 function viewTemplates(V) { listDocsView(V, '템플릿', `복사용 산출물 템플릿 ${S.manifest.templates.length}개.`, S.manifest.templates, 'title'); }
 function viewExamples(V) { listDocsView(V, '산출물 예시', `완성 산출물 모범 예시 ${S.manifest.examples.length}개.`, S.manifest.examples, 'title'); }
+
+/* ---------- 유튜브 인사이트 ---------- */
+function viewYoutube(V) {
+  const mode = chatMode();
+  const engineLabel = { bridge: '🖥️ Claude Code 브리지(구독)', ollama: '🟢 로컬 Ollama', server: '서버', direct: '내 API 키', prompt: '🆓 프롬프트 복사(무API)' }[mode];
+  V.innerHTML = `<div class="page-head"><h1>유튜브 인사이트</h1><p>유튜브 링크만 붙여넣으면 자막을 추출해 핵심 인사이트·적용점·액션아이템을 뽑아냅니다.</p></div>
+  <div class="form" style="max-width:860px">
+    <label>유튜브 링크</label>
+    <input id="yt-url" placeholder="https://youtu.be/… 또는 https://www.youtube.com/watch?v=…" />
+    <div style="display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap">
+      <button class="btn primary" id="yt-go" type="button">▶ 분석</button>
+      <button class="btn ghost" id="yt-manual-toggle" type="button">자막 직접 붙여넣기</button>
+      <span style="color:var(--muted);font-size:12px">엔진: ${esc(engineLabel)}</span>
+    </div>
+    <div id="yt-manual" class="hidden" style="margin-top:12px">
+      <label>자막/스크립트 직접 입력 <span class="hint">유튜브 ⋯ → 스크립트 표시 → 복사</span></label>
+      <textarea id="yt-text" rows="6" placeholder="여기에 자막 텍스트를 붙여넣고 '분석'을 누르면, 링크 없이도 분석합니다." style="width:100%;border:1px solid var(--line);border-radius:10px;padding:12px;font-family:inherit;font-size:13px;background:var(--surface);color:var(--ink)"></textarea>
+    </div>
+    <div class="hint" style="margin-top:8px">자막 추출은 서버(배포 환경)에서 동작합니다. 자막이 없거나 차단된 영상은 위 "직접 붙여넣기"를 사용하세요.</div>
+  </div>
+  <div id="yt-out" style="margin-top:16px"></div>`;
+  $('#yt-manual-toggle').onclick = () => $('#yt-manual').classList.toggle('hidden');
+  $('#yt-go').onclick = ytAnalyze;
+  $('#yt-url').addEventListener('keydown', e => { if (e.key === 'Enter') ytAnalyze(); });
+}
+
+async function ytAnalyze() {
+  const url = ($('#yt-url').value || '').trim();
+  const manual = ($('#yt-text') ? $('#yt-text').value : '').trim();
+  const out = $('#yt-out');
+  let meta = { title: '', url, transcript: manual };
+
+  if (!manual) {
+    if (!url) { toast('유튜브 링크를 붙여넣거나 자막을 입력하세요.'); return; }
+    out.innerHTML = `<div class="msg sys" style="max-width:100%"><div class="md">자막을 가져오는 중…</div></div>`;
+    try {
+      const r = await fetch('/api/youtube', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ url }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d.ok) throw new Error(d.error || ('HTTP ' + r.status));
+      meta = { title: d.title || '', author: d.author || '', url: d.url || url, transcript: d.transcript, lang: d.lang, chars: d.chars };
+    } catch (e) {
+      out.innerHTML = errorBox('자막 자동 추출 실패: ' + esc(e.message) + '<br><br>아래 <b>"자막 직접 붙여넣기"</b>에 스크립트를 넣고 다시 분석하세요. (로컬 정적 서버에는 /api/youtube가 없어 배포 사이트에서 동작합니다.)');
+      $('#yt-manual').classList.remove('hidden');
+      return;
+    }
+  }
+  if (!meta.transcript || meta.transcript.length < 30) { toast('자막 내용이 너무 짧습니다.'); return; }
+
+  const tx = meta.transcript.slice(0, 24000);
+  const head = `제목: ${meta.title || '(미상)'}${meta.author ? ' / 채널: ' + meta.author : ''}\n링크: ${meta.url || ''}`;
+  const system = '당신은 ClubSchool AI OS의 리서치 분석가입니다. 유튜브 영상 자막에서 실행 가능한 인사이트를 한국어로, 근거에 기반해 구조적으로 추출합니다. 추측은 추측이라고 표시합니다.';
+  const prompt = `다음 유튜브 영상의 자막을 분석해 인사이트 보고서를 한국어 마크다운으로 작성하세요.\n\n[영상 정보]\n${head}\n\n[자막]\n${tx}\n\n[출력 형식]\n## 한줄 요약\n## 핵심 인사이트 (5~8개, 각 항목에 근거)\n## 주요 내용 정리 (구획별 소제목)\n## 우리 사업·프로젝트 적용점\n## 액션 아이템 (체크리스트)\n## 인용할 만한 핵심 문장 3가지`;
+
+  if (chatMode() === 'prompt') {
+    navigator.clipboard.writeText(prompt).catch(() => {});
+    out.innerHTML = `<div class="msg sys" style="max-width:100%"><div class="md">✅ 자막 확보(${(meta.chars || meta.transcript.length).toLocaleString()}자). 분석 프롬프트를 복사했습니다 — <a href="https://claude.ai/code" target="_blank">Claude Code</a>에 붙여넣으면 내 구독으로 인사이트가 생성됩니다(과금 0).</div></div>
+      <pre style="background:#0e1116;color:#e6edf3;padding:14px;border-radius:10px;overflow:auto;font-size:12px;white-space:pre-wrap;margin-top:10px">${esc(prompt)}</pre>`;
+    return;
+  }
+  out.innerHTML = `<div class="msg sys" style="max-width:100%"><div class="md">자막 확보(${(meta.chars || meta.transcript.length).toLocaleString()}자). 인사이트 생성 중…</div></div>`;
+  try {
+    const reply = await llmComplete(system, [{ role: 'user', content: prompt }]);
+    const title = '유튜브 인사이트 — ' + (meta.title || meta.url || '영상').slice(0, 50);
+    out.innerHTML = `<div class="doc"><div class="doc-toolbar"><span class="doc-path">${esc(meta.url || '')}</span></div><div class="md">${renderMd(reply)}</div></div>`;
+    const exp = exportBar(title, reply, ['pptx', 'doc', 'pdf', 'md']);
+    out.querySelector('.doc-toolbar').appendChild(exp);
+  } catch (e) {
+    out.innerHTML = errorBox('인사이트 생성 실패: ' + esc(chatError(e.message)));
+  }
+}
 
 function viewGoldwiki(V) {
   const m = S.manifest.goldwiki;
