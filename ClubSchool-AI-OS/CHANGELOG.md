@@ -36,6 +36,19 @@
 
 ---
 
+## [1.7.0] — 2026-06-27 · 로컬 Claude Code 브리지(내 구독으로 화면 내 대화)
+
+### Added (추가)
+- **로컬 Claude Code 브리지** (`server/claude-bridge.py`) — 내 PC에서 실행하는 의존성 없는 작은 HTTP
+  서버. 콘솔(브라우저)이 localhost로 호출하면 `claude -p`(내 Claude.ai 구독 로그인)를 실행해 답변을
+  **콘솔 화면 안에 바로** 표시. **종량제 API 미사용 · 과금 0원**, 데이터는 localhost를 벗어나지 않음.
+  - 콘솔: 응답 엔진에 `🖥️ 로컬 Claude Code 브리지` 추가, 주소/모델 설정 + 연결 테스트, 연결 라벨
+    `Claude Code 브리지(구독)`. 에이전트 대화·자동 파이프라인 모두 지원(`callBridge`).
+  - 가이드: `Docs/CLAUDE_BRIDGE.md` (Claude Code 설치 → 구독 로그인 → 브리지 실행 → 콘솔 연결).
+- 엔진별 안내 문구에 브리지/Ollama 케이스 보강, 에이전트 인트로의 `undefined` 표기 버그 수정.
+
+---
+
 ## [1.6.1] — 2026-06-27 · 구독(프롬프트) 모드 기본화
 
 ### Changed (변경)
