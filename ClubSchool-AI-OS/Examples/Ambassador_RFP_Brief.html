@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>엠배서더호텔 그룹 홈페이지 재구축 — RFP 분석 요약</title>
+<meta name="hz:slide-selector" content=".page" />
+<meta name="hz:canvas-width" content="794" />
+<meta name="hz:canvas-height" content="1123" />
+<link rel="stylesheet" href="https://use.typekit.net/bzv3lqo.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{display:flex;flex-direction:column;align-items:center;gap:24px;background:#e9edf2;padding:24px;font-family:"source-han-sans-cjk-ko","Noto Sans KR",sans-serif}
+.page{position:relative;width:210mm;height:297mm;background:#fff;overflow:hidden;color:#16202e}
+.bar{position:absolute;top:0;left:0;width:100%;height:7mm;background:linear-gradient(90deg,#1f3a5f,#0e1c30)}
+.gold{position:absolute;top:7mm;left:0;width:100%;height:1.4mm;background:#c8a86b}
+.kick{position:absolute;top:16mm;left:18mm;font-size:9pt;letter-spacing:5px;color:#b3935a;font-weight:700}
+.h1{position:absolute;top:21mm;left:18mm;width:150mm;font-size:26pt;font-weight:900;line-height:1.2;color:#11203a}
+.org{position:absolute;top:17mm;right:18mm;text-align:right;font-size:8.5pt;color:#6a7488;line-height:1.8}
+.org b{color:#1f3a5f}
+.lede{position:absolute;left:18mm;width:150mm;font-size:10pt;color:#46556b;line-height:1.6}
+.sec{position:absolute;left:18mm;font-size:9pt;letter-spacing:2px;color:#8a93a6;font-weight:700;text-transform:uppercase}
+.kpis{position:absolute;left:18mm;width:174mm;display:flex;gap:4mm}
+.kpi{flex:1;background:linear-gradient(160deg,#f7f9fc,#eef2f7);border:1px solid #e2e8f0;border-radius:4mm;padding:4.5mm;text-align:center}
+.kpi .v{font-size:18pt;font-weight:900;color:#1f3a5f}.kpi .l{font-size:7.6pt;color:#6a7488;margin-top:1mm;line-height:1.35}
+.grid2{position:absolute;left:18mm;width:174mm;display:flex;gap:5mm}
+.box{flex:1;background:#f7f9fc;border:1px solid #e2e8f0;border-radius:4mm;padding:5mm}
+.box h4{font-size:10pt;color:#11203a;font-weight:700;margin-bottom:2.5mm}
+.box ul{list-style:none;font-size:8.6pt;color:#46556b;line-height:1.65}
+.box li{padding-left:4mm;position:relative;margin-bottom:0.6mm}
+.box li::before{content:"";position:absolute;left:0;top:2.3mm;width:1.5mm;height:1.5mm;border-radius:50%;background:#c8a86b}
+.fnr{position:absolute;left:18mm;width:174mm;display:grid;grid-template-columns:repeat(4,1fr);gap:3mm}
+.chip{background:#fff;border:1px solid #e2e8f0;border-radius:2.5mm;padding:2.6mm 2mm;text-align:center;font-size:8pt;color:#16202e;font-weight:600}
+.chip span{display:block;font-size:6.6pt;color:#9aa6b6;font-weight:500;margin-top:0.6mm}
+.risk{position:absolute;left:18mm;width:174mm}
+.rrow{display:flex;align-items:center;gap:4mm;padding:2.5mm 0;border-bottom:1px solid #eef0f4;font-size:9pt}
+.rrow:last-child{border-bottom:0}
+.rrow .lv{width:15mm;font-weight:800;font-size:7.6pt;text-align:center;border-radius:2mm;padding:1mm 0;color:#fff}
+.rrow .lv.h{background:#1f3a5f}.rrow .lv.m{background:#9aa6b6}
+.rrow .rt{flex:1;color:#11203a;font-weight:600}.rrow .rd{flex:1.5;color:#6a7488;font-size:8.2pt}
+.tl{position:absolute;left:18mm;width:174mm;display:flex;justify-content:space-between;border-top:1px solid #e2e8f0;padding-top:6mm}
+.ph{flex:1;text-align:center;position:relative}
+.ph::before{content:"";position:absolute;top:-7.6mm;left:50%;transform:translateX(-50%);width:3mm;height:3mm;border-radius:50%;background:#c8a86b}
+.ph .m{font-size:8.2pt;font-weight:700;color:#11203a}.ph .d{font-size:7pt;color:#8a93a6;margin-top:1mm}
+.score{position:absolute;left:18mm;width:174mm;background:#11203a;border-radius:4mm;padding:5mm 7mm;display:flex;align-items:center;gap:7mm;color:#fff}
+.score .big{font-size:30pt;font-weight:900;color:#d8b878;line-height:1}.score .big span{font-size:12pt;color:#9aa6b6}
+.score .lab{font-size:8.7pt;color:#c3ccd9;line-height:1.6}.score .lab b{color:#fff;font-size:10.5pt}
+.foot{position:absolute;bottom:12mm;left:18mm;width:174mm;display:flex;justify-content:space-between;font-size:7.3pt;color:#9aa6b6;border-top:1px solid #e2e8f0;padding-top:4mm}
+.conf{position:absolute;top:9mm;right:18mm;font-size:7pt;color:#b04a4a;font-weight:700;letter-spacing:1px}
+</style>
+</head>
+<body>
+<div class="page" data-canvas-width="794" data-canvas-height="1123">
+  <div class="bar"></div><div class="gold"></div>
+  <div class="conf">CONFIDENTIAL · 대외비</div>
+  <div class="kick">RFP ANALYSIS · 요약</div>
+  <div class="org">발주 <b>엠배서더호텔 그룹</b><br>IT&마케팅<br>예산 12억 이내 · 10~11개월</div>
+  <div class="h1">홈페이지 재구축<br>RFP 분석</div>
+  <div class="lede" style="top:56mm">웹·모바일앱·관리자·CRM 통합 재구축. OTA 의존·수수료에 대응해 <b style="color:#1f3a5f">D2C 직접예약</b>을 확대하고, 부킹엔진 자체 구축 + AWS 클라우드 네이티브 전환 + 멤버십/CRM 개인화를 목표로 한다.</div>
+
+  <div class="sec" style="top:76mm">사업 핵심 지표</div>
+  <div class="kpis" style="top:82mm">
+    <div class="kpi"><div class="v">12억</div><div class="l">예산 이내</div></div>
+    <div class="kpi"><div class="v">10~11<span style="font-size:9pt">개월</span></div><div class="l">구축 기간</div></div>
+    <div class="kpi"><div class="v">10,000</div><div class="l">동접 무중단</div></div>
+    <div class="kpi"><div class="v">99.9%</div><div class="l">가용성 SLA</div></div>
+    <div class="kpi"><div class="v">12개월</div><div class="l">ITO 운영</div></div>
+  </div>
+
+  <div class="sec" style="top:112mm">기능 요구 (FNR · 11개 영역)</div>
+  <div class="fnr" style="top:118mm">
+    <div class="chip">회원/로그인<span>OAuth·JWT</span></div>
+    <div class="chip">메인/홈<span>배너·추천·검색</span></div>
+    <div class="chip">검색/필터<span>지도·자동완성</span></div>
+    <div class="chip">예약/결제<span>실시간·간편결제</span></div>
+    <div class="chip">마이페이지<span>예약·리뷰·쿠폰</span></div>
+    <div class="chip">다이닝<span>좌석예약 연동</span></div>
+    <div class="chip">관리자<span>CMS·통계·OTP</span></div>
+    <div class="chip">멤버십/CRM<span>등급·BI·전환분석</span></div>
+    <div class="chip">UI/UX<span>반응형·디자인시스템</span></div>
+    <div class="chip">상품권<span>발행·재고·정산</span></div>
+    <div class="chip">E-Shop<span>상품·결제·리뷰</span></div>
+    <div class="chip" style="background:#11203a;color:#fff;border-color:#11203a">부킹엔진<span style="color:#c8a86b">자체 구축</span></div>
+  </div>
+
+  <div class="sec" style="top:158mm">비기능·보안 컴플라이언스</div>
+  <div class="grid2" style="top:164mm">
+    <div class="box"><h4>인프라·성능·데이터</h4><ul><li>AWS 클라우드 네이티브·망분리·WAF·IAM</li><li>응답 2초·LCP 2초·RTO 2h/RPO 1h</li><li>REST·OpenAPI 3.0·메시지 큐</li><li>레거시 이행 검증리포트·데이터 클리닝</li></ul></div>
+    <div class="box"><h4>보안·품질</h4><ul><li>ISMS-P·개인정보보호법·PCI-DSS</li><li>AES-256·TLS 1.2+·MFA·IP 화이트리스트</li><li>ISO/IEC 25010·RTM 100%·KWCAG 2.2</li><li>오픈 전 모의해킹·하자보수 12개월</li></ul></div>
+  </div>
+
+  <div class="score" style="top:228mm">
+    <div class="big">70<span>%</span></div>
+    <div class="lab"><b>Bid/No-Bid 4축 — 참여 권고(BID)</b><br>적합도 4.5 · 승산 3.0 · 수익성 3.5 · 리스크 3.0 (5점 만점) · 협상에 의한 계약(기술 우위)</div>
+  </div>
+  <div class="foot"><span>ClubSchool AI OS · RFP 분석 (대외비)</span><span>1 / 2</span></div>
+</div>
+
+<div class="page" data-canvas-width="794" data-canvas-height="1123">
+  <div class="bar"></div><div class="gold"></div>
+  <div class="conf">CONFIDENTIAL · 대외비</div>
+  <div class="kick">WIN · RISK · PLAN</div>
+  <div class="h1" style="font-size:22pt;top:19mm">윈테마 · 리스크 · 일정</div>
+
+  <div class="sec" style="top:40mm">윈테마 (수주 전략)</div>
+  <div class="grid2" style="top:46mm">
+    <div class="box"><h4>차별화 메시지</h4><ul><li>WT1 D2C 부킹엔진 — OTA 수수료 절감·직접예약 전환</li><li>WT2 클라우드 네이티브 신뢰성 — 동접 10k·99.9%</li><li>WT3 멤버십/CRM 개인화 — 등급할인·BI·재방문</li><li>WT4 보안·품질 거버넌스 — ISMS-P·PCI-DSS·RTM</li></ul></div>
+    <div class="box"><h4>고객 Pain → 대응</h4><ul><li>OTA 의존·수수료 → 직접예약 부킹엔진</li><li>노후·반응형 깨짐 → 모바일 퍼스트 재구축</li><li>개인화·로열티 부재 → 멤버십/CRM</li><li>데이터 가비지 → 클리닝 도구</li></ul></div>
+  </div>
+
+  <div class="sec" style="top:108mm">핵심 리스크</div>
+  <div class="risk" style="top:114mm">
+    <div class="rrow"><span class="lv h">HIGH</span><span class="rt">부킹엔진 자체 구축</span><span class="rd">요금·재고·가용성 복잡도 → 도메인 아키텍트·PoC 선행</span></div>
+    <div class="rrow"><span class="lv h">HIGH</span><span class="rt">외부 연동 다수</span><span class="rd">PG·메타서치·다이닝·PMS → 인터페이스 정의·연계테스트 조기</span></div>
+    <div class="rrow"><span class="lv h">HIGH</span><span class="rt">데이터 마이그레이션</span><span class="rd">레거시 정제·검증 → 매핑·리허설 2회·클리닝</span></div>
+    <div class="rrow"><span class="lv m">MED</span><span class="rt">보안 인증</span><span class="rd">ISMS-P·PCI-DSS → 보안설계 선반영·모의해킹 일정</span></div>
+    <div class="rrow"><span class="lv m">MED</span><span class="rt">스코프 크리프</span><span class="rd">"경미사항 간주" 조항 → 베이스라인·RTM·변경통제</span></div>
+  </div>
+
+  <div class="sec" style="top:166mm">수행 일정 (총 10~11개월 + ITO 12개월)</div>
+  <div class="tl" style="top:176mm">
+    <div class="ph"><div class="m">착수·분석</div><div class="d">1.0M</div></div>
+    <div class="ph"><div class="m">설계</div><div class="d">1.5–2.0M</div></div>
+    <div class="ph"><div class="m">디자인</div><div class="d">1.0M</div></div>
+    <div class="ph"><div class="m">개발(Sprint)</div><div class="d">3.5–4.0M</div></div>
+    <div class="ph"><div class="m">테스트·이행</div><div class="d">1.5–2.0M</div></div>
+    <div class="ph"><div class="m">오픈·안정화</div><div class="d">1.0M</div></div>
+  </div>
+
+  <div class="grid2" style="top:205mm">
+    <div class="box"><h4>즉시 액션</h4><ul><li>부킹엔진 요금/재고 PoC</li><li>외부 연동 목록·책임경계 Q&A</li><li>보안(ISMS-P/PCI-DSS) 대응계획</li><li>레거시 데이터 실태·이행 전략</li></ul></div>
+    <div class="box"><h4>필요 자원</h4><ul><li>PM·PL·아키텍트(부킹엔진)</li><li>백엔드·프론트·앱(RN/Flutter)</li><li>디자이너·QA·보안 엔지니어</li><li>방법론 Hybrid(워터폴+Agile 2주)</li></ul></div>
+  </div>
+  <div class="foot"><span>ClubSchool AI OS · RFP 분석 (대외비)</span><span>2 / 2</span></div>
+</div>
+</body>
+</html>
