@@ -766,8 +766,16 @@
       "path": "Examples/08_QA_Plan.md"
     },
     {
+      "title": "별첨4. 서비스 개선 제안 — 모바일 보장분석 전환율 개선 화면설계서(SB)",
+      "path": "Examples/Meritz_별첨4_보장분석_SB초안.md"
+    },
+    {
       "title": "Examples — 워크스루 예시: 전국 청소년 동아리 통합 플랫폼",
       "path": "Examples/README.md"
+    },
+    {
+      "title": "RFP 분석 패키지 — 2025년도 메리츠화재 인터넷 마케팅 플랫폼 운영",
+      "path": "Examples/RFP_Analysis_Meritz_2025.md"
     },
     {
       "title": "[샘플 RFP] 전국 청소년 동아리 통합 플랫폼 구축",
