@@ -286,7 +286,7 @@ function chatMode() {
   // 'ollama'  : 로컬 Ollama (무료, 내 PC) — 사용자가 명시 선택
   // 'server'  : 백엔드 프록시 사용 (서버에 키 있음) — 'auto' 선택 시에만
   // 'direct'  : 브라우저에서 직접 Anthropic 호출 (콘솔 설정에 키 있음)
-  const e = S.settings.engine || 'direct';   // 기본: 내 API 키(내 토큰)로 대화
+  const e = S.settings.engine || 'prompt';   // 기본: Claude 구독으로 실행(프롬프트 복사 → Claude Code), API 과금 0
   if (e === 'ollama') return (S.settings.ollamaUrl || '').trim() ? 'ollama' : 'prompt';
   if (e === 'direct') return S.settings.apiKey ? 'direct' : 'prompt';   // 내 토큰
   if (e === 'auto') {                          // 'API 자동' 선택 시: 내 키 우선, 없으면 서버 키
@@ -298,7 +298,7 @@ function chatMode() {
 function refreshConn() {
   const mode = chatMode();
   const el = $('#conn-state');
-  const label = { ollama: '● 로컬 Ollama', server: '● 서버 연결됨', direct: '● API 연결됨', prompt: '● 무API 모드' }[mode];
+  const label = { ollama: '● 로컬 Ollama', server: '● 서버 연결됨', direct: '● API 연결됨', prompt: '● 구독 모드(프롬프트)' }[mode];
   el.textContent = label;
   el.className = 'conn-pill ' + (mode === 'prompt' ? 'conn-off' : 'conn-on');
 }
@@ -418,7 +418,7 @@ function plRun() {
     if (!rfp) { toast('RFP 내용을 붙여넣으세요.'); return; }
     const prompt = plBuildPrompt(rfp);
     navigator.clipboard.writeText(prompt).catch(() => {});
-    $('#pl-out').innerHTML = `<div class="msg sys" style="max-width:100%"><div class="md">✅ 실행 프롬프트를 클립보드에 복사했습니다. <b>Claude Code</b>에 붙여넣어 실행하세요.</div></div>
+    $('#pl-out').innerHTML = `<div class="msg sys" style="max-width:100%"><div class="md">✅ 실행 프롬프트를 복사했습니다. <b><a href="https://claude.ai/code" target="_blank">Claude Code</a></b>(내 Claude 구독 로그인)에 붙여넣으면 에이전트들이 자동 실행됩니다 — <b>API 과금 0원</b>.</div></div>
       <pre style="background:#0e1116;color:#e6edf3;padding:14px;border-radius:10px;overflow:auto;font-size:12px;white-space:pre-wrap">${esc(prompt)}</pre>`;
   };
   $('#pl-auto').onclick = () => {
@@ -780,23 +780,26 @@ function viewSettings(V) {
   <div class="form">
     <label>응답 엔진 <span class="hint">에이전트 대화·자동 파이프라인을 무엇으로 구동할지</span></label>
     <select id="set-engine">
-      <option value="direct" ${(s.engine || 'direct') === 'direct' ? 'selected' : ''}>🔑 내 Anthropic API 키 — 내 토큰으로 바로 대화 (권장)</option>
-      <option value="prompt" ${s.engine === 'prompt' ? 'selected' : ''}>🆓 무API · 프롬프트 복사 (과금 전혀 없음)</option>
+      <option value="prompt" ${(s.engine || 'prompt') === 'prompt' ? 'selected' : ''}>🆓 Claude 구독으로 실행 — 프롬프트 복사 → Claude Code (권장 · API 과금 0원)</option>
       <option value="ollama" ${s.engine === 'ollama' ? 'selected' : ''}>🟢 로컬 Ollama (무료 · 내 PC · 모바일 불가)</option>
+      <option value="direct" ${s.engine === 'direct' ? 'selected' : ''}>🔑 Anthropic API 키 직접 (종량제 유료 · 구독과 별개)</option>
       <option value="auto" ${s.engine === 'auto' ? 'selected' : ''}>☁️ 서버 키 자동 (배포 서버에 설정된 키)</option>
     </select>
-    <div class="hint" style="margin-top:6px"><b>내 API 키</b>를 넣으면 브라우저에서 Claude를 직접 호출해 <b>내 토큰(크레딧)에서 소진</b>됩니다(서버 키 사용 안 함). 아래에 키를 입력하세요.</div>
+    <div class="hint" style="margin-top:6px"><b>Claude.ai 구독(Pro/Max)</b>은 웹앱에서 직접 호출할 수 없습니다. 구독으로 쓰려면 <b>프롬프트 복사 → Claude Code에 붙여넣기</b>가 유일한 경로이며, 이때 <b>API 과금이 전혀 없습니다.</b></div>
 
-    <div style="background:rgba(231,198,90,.08);border:1px solid rgba(231,198,90,.25);border-radius:10px;padding:14px;margin:14px 0">
-      <label style="margin-top:0">🔑 Anthropic API 키 <span class="hint">내 토큰으로 대화 · 이 브라우저에만 저장</span></label>
-      <input id="set-key" type="password" placeholder="sk-ant-..." value="${esc(s.apiKey || '')}" autocomplete="off" />
-      <div class="row" style="margin-top:8px">
-        <div><label>Claude 모델</label>
-          <select id="set-model">${['claude-opus-4-8', 'claude-sonnet-4-6', 'claude-haiku-4-5-20251001'].map(m => `<option ${s.model === m ? 'selected' : ''}>${m}</option>`).join('')}</select></div>
-        <div><label>최대 출력 토큰</label><input id="set-tokens" type="number" value="${s.maxTokens || 4096}" /></div>
+    <details style="margin-top:8px">
+      <summary style="cursor:pointer;font-weight:600;font-size:13px;color:var(--muted)">고급: Anthropic API 키 직접 입력 (종량제 — 구독과 무관)</summary>
+      <div style="background:rgba(231,198,90,.08);border:1px solid rgba(231,198,90,.25);border-radius:10px;padding:14px;margin:10px 0">
+        <label style="margin-top:0">🔑 Anthropic API 키 <span class="hint">종량제 과금 · 이 브라우저에만 저장 · 구독 토큰과 별개</span></label>
+        <input id="set-key" type="password" placeholder="sk-ant-..." value="${esc(s.apiKey || '')}" autocomplete="off" />
+        <div class="row" style="margin-top:8px">
+          <div><label>Claude 모델</label>
+            <select id="set-model">${['claude-opus-4-8', 'claude-sonnet-4-6', 'claude-haiku-4-5-20251001'].map(m => `<option ${s.model === m ? 'selected' : ''}>${m}</option>`).join('')}</select></div>
+          <div><label>최대 출력 토큰</label><input id="set-tokens" type="number" value="${s.maxTokens || 4096}" /></div>
+        </div>
+        <div class="hint" style="margin-top:8px">⚠️ 이 키는 <b>종량제 API</b>(console.anthropic.com)이며 <b>월정액 구독과 별개로 과금</b>됩니다. 구독만 쓰시려면 이걸 비워두고 위에서 "프롬프트 복사"를 사용하세요.</div>
       </div>
-      <div class="hint" style="margin-top:8px">키 발급: <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com → API Keys</a> (<code>sk-ant-</code>로 시작). 저렴하게 쓰려면 모델을 <b>claude-haiku</b>로 선택하세요.</div>
-    </div>
+    </details>
 
     <div style="background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.22);border-radius:10px;padding:14px;margin:14px 0">
       <label style="margin-top:0">🟢 로컬 Ollama 주소 <span class="hint">PC에서 무료 실행 · 모바일 불가</span></label>
@@ -967,7 +970,7 @@ function copyPrompt() {
   const full = buildPrompt(text);
   navigator.clipboard.writeText(full);
   addMsg('user', text);
-  pushSys('실행 프롬프트를 클립보드에 복사했습니다. Claude Code 또는 claude.ai 에 붙여넣어 실행하세요.');
+  pushSys('✅ 실행 프롬프트를 복사했습니다.\n\n**내 Claude 구독으로 실행** → [Claude Code](https://claude.ai/code)에 붙여넣으세요(에이전트·GoldWiki 표준 그대로 실행, **API 과금 0원**).\n단순 질의는 [claude.ai](https://claude.ai) 채팅에 붙여넣어도 됩니다.');
   $('#wp-input').value = '';
 }
 
@@ -981,7 +984,7 @@ async function sendMessage() {
   if (mode === 'prompt') {
     const full = buildPrompt(text);
     navigator.clipboard.writeText(full);
-    pushSys('실행 프롬프트를 클립보드에 복사했습니다. Claude Code/claude.ai 에 붙여넣어 실행하세요. (서버에 API 키를 설정하거나 콘솔 설정에 키를 넣으면 여기서 바로 대화합니다.)');
+    pushSys('✅ 실행 프롬프트를 복사했습니다.\n\n**내 Claude 구독으로 실행** → [Claude Code](https://claude.ai/code)에 붙여넣으세요(에이전트·GoldWiki 표준 그대로, **API 과금 0원**).\n단순 질의는 [claude.ai](https://claude.ai) 채팅도 가능합니다.');
     return;
   }
 
