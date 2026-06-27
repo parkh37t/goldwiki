@@ -144,7 +144,8 @@ status: active
 
 ### 현재 상태(Current State)
 - `/rfp-start` 분석 패키지 산출 완료(자체 채점 88, G2 통과): [Examples/RFP_Analysis_Meritz_2025.md](../Examples/RFP_Analysis_Meritz_2025.md).
-- 다음: Q&A 정리 → 별첨3 인력·별첨4 SB → 원가/가격 확정 → `/proposal-build` 인계.
+- 별첨4 과제① **보장분석 전환율 개선 SB 초안** 산출(6매 구성): [Examples/Meritz_별첨4_보장분석_SB초안.md](../Examples/Meritz_별첨4_보장분석_SB초안.md).
+- 다음: 별첨4 과제②(펫보험 이탈율) SB → 별첨3 인력 → 원가/가격 확정 → `/proposal-build` 인계.
 
 ### 리스크(Risks)
 | # | 리스크 | 영향 | 가능성 | 대응 |
