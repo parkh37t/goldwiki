@@ -6,6 +6,8 @@
 > 형식: SB 6매 이내(표지 1 + 화면 5) · 대상 URL(現): `mstore.meritzfire.com/Direct-lab/ins-solution.do`
 > 표준: [GoldWiki UX](../GoldWiki/UX/README.md) · [DesignSystem](../GoldWiki/DesignSystem/README.md) · [접근성 WCAG 2.2 AA(ADR-0002)](../GoldWiki/32_DECISION_LOG.md)
 
+> ▶ **[동작 프로토타입 열기 (5화면 클릭 체험)](../Examples/prototypes/meritz-bojang-analysis.html)** — 디자인 토큰 적용, 새 탭에서 실제 동작. (아래는 화면별 명세)
+
 ---
 
 ## [1매] 개요 — AS-IS 진단 · 개선 전략 · KPI

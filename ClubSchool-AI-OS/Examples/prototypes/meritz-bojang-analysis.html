@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>메리츠 보장분석 전환율 개선 — 동작 프로토타입 (별첨4 ①)</title>
+<style>
+/* ===== 디자인 토큰 (그대로 구현 자산화) ===== */
+:root{
+  --brand:#E2231A; --brand-2:#b51812; --brand-soft:#fdecea;
+  --ink:#1a1d22; --ink-2:#48505c; --muted:#7b8493; --faint:#aab2c0;
+  --bg:#eef1f5; --surface:#ffffff; --surface-2:#f5f7fa; --line:#e6e9ef; --line-2:#d7dce4;
+  --ok:#1fab6d; --warn:#f0a020;
+  --r:16px; --r-sm:10px; --tap:48px;
+  --sans:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;
+  --shadow:0 1px 2px rgba(20,30,55,.06),0 10px 30px rgba(20,30,55,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:#0e1116;color:var(--ink);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 12px;gap:14px;-webkit-font-smoothing:antialiased}
+.head{color:#cdd5e2;text-align:center;max-width:420px}
+.head h1{font-size:15px;color:#fff;font-weight:800}
+.head p{font-size:12px;color:#8b94a6;margin-top:4px}
+/* 리뷰용 단계 점프 */
+.stepper{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:420px}
+.stepper button{border:1px solid #2a3140;background:#161922;color:#aab2c0;font-size:11px;padding:6px 10px;border-radius:999px;cursor:pointer;font-family:inherit}
+.stepper button.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:700}
+
+/* ===== 폰 프레임 ===== */
+.phone{width:390px;max-width:96vw;height:780px;max-height:86vh;background:var(--bg);border-radius:34px;box-shadow:0 0 0 11px #11131a,0 24px 60px rgba(0,0,0,.55);overflow:hidden;position:relative;display:flex;flex-direction:column}
+.notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:150px;height:26px;background:#11131a;border-radius:0 0 16px 16px;z-index:30}
+.topbar{height:54px;display:flex;align-items:center;gap:10px;padding:0 16px;background:var(--surface);border-bottom:1px solid var(--line);position:relative;z-index:20}
+.topbar .back{font-size:20px;color:var(--ink-2);background:none;border:0;cursor:pointer;width:32px}
+.topbar .ttl{font-weight:700;font-size:15px}
+.topbar .step{margin-left:auto;font-size:12px;color:var(--muted)}
+.progress{height:3px;background:var(--line)}
+.progress>i{display:block;height:100%;background:var(--brand);width:0;transition:width .35s}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.screen{display:none;padding:20px 18px 28px;animation:fade .25s ease}
+.screen.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ===== 공통 컴포넌트 ===== */
+.h-lead{font-size:24px;font-weight:900;line-height:1.3;letter-spacing:-.02em}
+.h-lead .em{color:var(--brand)}
+.sub{color:var(--muted);font-size:13px;margin-top:8px;line-height:1.6}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;box-shadow:var(--shadow)}
+.cta{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:var(--tap);background:var(--brand);color:#fff;border:0;border-radius:14px;font-size:16px;font-weight:800;font-family:inherit;cursor:pointer;box-shadow:0 8px 22px rgba(226,35,26,.28)}
+.cta:active{transform:translateY(1px)}
+.cta.sec{background:var(--surface);color:var(--brand);border:1.5px solid var(--brand);box-shadow:none}
+.cta.sm{min-height:38px;font-size:13px;border-radius:10px;width:auto;padding:0 14px}
+.sticky{position:sticky;bottom:0;background:linear-gradient(180deg,transparent,var(--bg) 26%);padding:14px 0 4px;margin-top:16px}
+.trust{display:flex;flex-direction:column;gap:7px;margin:18px 0}
+.trust div{font-size:12.5px;color:var(--ink-2);display:flex;gap:8px;align-items:center}
+.trust .ic{color:var(--ok);font-weight:900}
+.badge{display:inline-block;font-size:11px;background:var(--brand-soft);color:var(--brand-2);font-weight:700;padding:4px 10px;border-radius:999px}
+.label{font-size:13px;font-weight:700;margin:18px 0 9px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1.5px solid var(--line-2);background:var(--surface);color:var(--ink-2);border-radius:999px;padding:9px 15px;font-size:13.5px;cursor:pointer;font-family:inherit;min-height:42px}
+.chip.on{border-color:var(--brand);background:var(--brand-soft);color:var(--brand-2);font-weight:700}
+.note{font-size:11.5px;color:var(--muted);display:flex;gap:6px;align-items:center;margin-top:14px}
+
+/* 게이지(미리보기/결과) */
+.gauge{margin-top:6px}
+.gauge .bar{height:14px;background:var(--surface-2);border-radius:999px;overflow:hidden;border:1px solid var(--line)}
+.gauge .bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--brand),#ff7a52);width:0;transition:width 1s ease}
+.gauge .lab{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:6px}
+.score{font-size:40px;font-weight:900;color:var(--brand)}
+.score small{font-size:15px;color:var(--muted);font-weight:700}
+
+/* 분석 로딩 */
+.spin{width:64px;height:64px;border-radius:50%;border:6px solid var(--line);border-top-color:var(--brand);margin:36px auto 18px;animation:rot 1s linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
+.auth{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.auth button{display:flex;align-items:center;gap:10px;min-height:var(--tap);border:1.5px solid var(--line-2);background:var(--surface);border-radius:12px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;padding:0 16px;color:var(--ink)}
+.auth button.kakao{background:#FEE500;border-color:#FEE500}
+.auth .dot{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;font-size:12px;font-weight:900;color:#fff}
+
+/* 결과 갭 카드 */
+.gap{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
+.gap:last-child{border-bottom:0}
+.gap .tag{width:54px;height:54px;border-radius:12px;background:var(--brand-soft);color:var(--brand-2);display:grid;place-items:center;font-weight:800;font-size:13px;flex-shrink:0}
+.gap .m{flex:1;min-width:0}
+.gap .m b{font-size:14.5px}
+.gap .m p{font-size:12px;color:var(--muted);margin-top:2px}
+
+/* 폼 */
+.field{margin:14px 0}
+.field label{font-size:12.5px;font-weight:700;color:var(--ink-2);display:block;margin-bottom:6px}
+.field input{width:100%;min-height:var(--tap);border:1.5px solid var(--line-2);border-radius:11px;padding:0 14px;font-size:15px;font-family:inherit;background:var(--surface)}
+.field input:focus{outline:none;border-color:var(--brand)}
+.field input[readonly]{background:var(--surface-2);color:var(--muted)}
+.agree{display:flex;gap:9px;align-items:flex-start;font-size:12.5px;color:var(--ink-2);margin:14px 0;line-height:1.5}
+.agree input{width:20px;height:20px;margin-top:1px;accent-color:var(--brand)}
+
+/* 완료 */
+.done{text-align:center;padding:50px 10px}
+.done .ok{width:84px;height:84px;border-radius:50%;background:var(--ok);color:#fff;font-size:44px;display:grid;place-items:center;margin:0 auto 18px;box-shadow:0 12px 30px rgba(31,171,109,.35)}
+.kpi-foot{max-width:420px;color:#7b8493;font-size:11px;text-align:center;line-height:1.7}
+.kpi-foot b{color:#cdd5e2}
+</style>
+</head>
+<body>
+<div class="head">
+  <h1>메리츠 보장분석 — 전환율 개선 동작 프로토타입</h1>
+  <p>별첨4 ① · TO-BE 5원칙(선가치-후인증·여정 가시화·갭 시각화·결과=행동 연결·신뢰) · 클릭하여 흐름 체험</p>
+</div>
+<div class="stepper" id="stepper"></div>
+
+<div class="phone">
+  <div class="notch"></div>
+  <div class="topbar">
+    <button class="back" id="back" aria-label="뒤로">‹</button>
+    <span class="ttl">보장분석</span>
+    <span class="step" id="stepTxt"></span>
+  </div>
+  <div class="progress"><i id="prog"></i></div>
+  <div class="scroll" id="scroll">
+
+    <!-- SB-01 시작 -->
+    <section class="screen on" data-s="0">
+      <span class="badge">3분 무료 진단</span>
+      <h2 class="h-lead" style="margin-top:12px">내 보험,<br><span class="em">빈틈은 없을까?</span></h2>
+      <p class="sub">또래 평균과 비교해 부족한 보장을 3분 만에 진단해 드려요.</p>
+      <div class="card" style="margin-top:18px">
+        <div style="font-size:12.5px;color:var(--muted);font-weight:700">또래 평균 대비 내 보장 (예시)</div>
+        <div class="gauge" style="margin-top:10px">
+          <div class="bar"><i data-fill="65"></i></div>
+          <div class="lab"><span>부족</span><span>충분</span></div>
+        </div>
+      </div>
+      <div class="trust">
+        <div><span class="ic">✓</span> 가입 권유가 아니에요</div>
+        <div><span class="ic">✓</span> 입력 정보는 진단에만 사용돼요</div>
+        <div><span class="ic">✓</span> 인증 없이 1분이면 시작</div>
+      </div>
+      <div class="sticky">
+        <button class="cta" data-go="1">무료로 진단 시작 ›</button>
+        <div class="note" style="justify-content:center">회원이면 정보가 자동 입력돼요</div>
+      </div>
+    </section>
+
+    <!-- SB-02 입력 -->
+    <section class="screen" data-s="1">
+      <p class="sub" style="margin-top:0">간단한 정보만 알려주세요. 타이핑 없이 선택하면 끝!</p>
+      <div class="label">나이대</div>
+      <div class="chips" data-single><span class="chip">20대</span><span class="chip on">30대</span><span class="chip">40대</span><span class="chip">50대+</span></div>
+      <div class="label">성별</div>
+      <div class="chips" data-single><span class="chip on">남성</span><span class="chip">여성</span></div>
+      <div class="label">가족 구성</div>
+      <div class="chips" data-single><span class="chip">싱글</span><span class="chip on">부부</span><span class="chip">자녀 있음</span></div>
+      <div class="label">현재 가입한 보험 <span style="color:var(--muted);font-weight:500">(모르면 건너뛰기)</span></div>
+      <div class="chips"><span class="chip on">실손</span><span class="chip">암</span><span class="chip">운전자</span><span class="chip">펫</span><span class="chip">종신</span></div>
+      <div class="note">🔒 입력값은 암호화되어 안전하게 보관돼요</div>
+      <div class="sticky"><button class="cta" data-go="2">다음 ›</button></div>
+    </section>
+
+    <!-- SB-03 분석 + 인증 -->
+    <section class="screen" data-s="2">
+      <div id="analyzing">
+        <div class="spin"></div>
+        <p style="text-align:center;font-weight:800;font-size:17px">분석 중…</p>
+        <p style="text-align:center;color:var(--muted);font-size:13px;margin-top:6px">또래 <b id="cnt">0</b>명과 비교하고 있어요</p>
+      </div>
+      <div id="authBox" style="display:none">
+        <h2 class="h-lead" style="font-size:20px">결과를 안전하게<br>확인하려면 본인 확인이 필요해요</h2>
+        <div class="auth">
+          <button class="kakao" data-go="3"><span class="dot" style="background:#3c1e1e">K</span> 카카오로 간편인증</button>
+          <button data-go="3"><span class="dot" style="background:#03c75a">N</span> 네이버 인증</button>
+          <button data-go="3"><span class="dot" style="background:#0064ff">T</span> 토스 / PASS 인증</button>
+          <button data-go="3" style="color:var(--muted)">휴대폰 본인확인</button>
+        </div>
+        <div class="trust" style="margin-top:18px">
+          <div><span class="ic">✓</span> 결과 저장·재열람을 위해 필요해요</div>
+          <div><span class="ic">✓</span> 가입 권유 전화는 가지 않아요</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SB-04 결과 -->
+    <section class="screen" data-s="3">
+      <div class="card" style="text-align:center;margin-top:6px">
+        <div style="font-size:12.5px;color:var(--muted);font-weight:700">내 보장 충분도</div>
+        <div class="score" style="margin:6px 0">62<small> / 100점</small></div>
+        <div class="gauge"><div class="bar"><i data-fill="62"></i></div>
+          <div class="lab"><span>현재</span><span>권장</span></div></div>
+        <div style="font-size:12px;color:var(--muted);margin-top:8px">또래 평균(71점)보다 <b style="color:var(--brand)">9점 낮아요</b></div>
+      </div>
+      <div class="label">⚠ 가장 부족한 3가지</div>
+      <div class="card">
+        <div class="gap"><div class="tag">실손</div><div class="m"><b>실손 보장 부족</b><p>월 1.2만원이면 보완 가능</p></div><button class="cta sm" data-go="4">상담</button></div>
+        <div class="gap"><div class="tag">운전자</div><div class="m"><b>운전자보험 미가입</b><p>일상 운전 리스크 무방비</p></div><button class="cta sm" data-go="4">상담</button></div>
+        <div class="gap"><div class="tag">펫</div><div class="m"><b>펫보험 해당 시 권장</b><p>반려동물 의료비 대비</p></div><button class="cta sm" data-go="4">상담</button></div>
+      </div>
+      <div class="sticky"><button class="cta" data-go="4">전체 무료 상담 신청 ›</button></div>
+    </section>
+
+    <!-- SB-05 상담신청 + 완료 -->
+    <section class="screen" data-s="4">
+      <div id="form">
+        <p class="sub" style="margin-top:0">부족한 <b style="color:var(--brand)">실손 보장</b>, 전문가가 맞춤 안내드려요.</p>
+        <div class="field"><label>이름</label><input value="홍길동" /></div>
+        <div class="field"><label>연락처</label><input value="인증정보로 자동 입력됨" readonly /></div>
+        <div class="label">상담 희망 시간</div>
+        <div class="chips" data-single><span class="chip on">오늘</span><span class="chip">내일</span><span class="chip">직접 지정</span></div>
+        <label class="agree"><input type="checkbox" checked /> <span>개인정보 수집·이용에 동의합니다 (상담 목적, <u>전문 보기</u>)</span></label>
+        <div class="sticky"><button class="cta" id="submit">무료 상담 신청 ›</button>
+          <div class="note" style="justify-content:center">신청 후 1영업일 내 연락드려요</div></div>
+      </div>
+      <div id="complete" style="display:none">
+        <div class="done">
+          <div class="ok">✓</div>
+          <h2 style="font-size:20px;font-weight:900">상담 신청 완료!</h2>
+          <p class="sub">접수번호 <b>MZ-240814-0042</b><br>전문가가 1영업일 내 연락드립니다.</p>
+          <button class="cta sec" style="margin-top:24px" data-go="3">진단 결과 다시 보기</button>
+          <button class="cta" style="margin-top:10px" data-go="0">처음으로</button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<div class="kpi-foot">
+  목표 KPI — 진단 완료율 <b>+15%p</b> · 상담 전환율 <b>+8%p</b> · 본인인증 통과율 <b>+10%p</b><br>
+  ClubSchool AI OS · 메리츠화재 인터넷 마케팅 플랫폼 운영 제안(별첨4 ①) · 디자인 토큰 그대로 구현 승계
+</div>
+
+<script>
+const screens=[...document.querySelectorAll('.screen')];
+const names=['시작','입력','분석·인증','결과','상담신청'];
+const prog=document.getElementById('prog'), stepTxt=document.getElementById('stepTxt');
+const stepper=document.getElementById('stepper');
+let cur=0;
+names.forEach((n,i)=>{const b=document.createElement('button');b.textContent=(i+1)+'. '+n;b.onclick=()=>go(i);stepper.appendChild(b);});
+function go(i){
+  cur=Math.max(0,Math.min(screens.length-1,i));
+  screens.forEach((s,j)=>s.classList.toggle('on',j===cur));
+  [...stepper.children].forEach((b,j)=>b.classList.toggle('on',j===cur));
+  prog.style.width=((cur+1)/screens.length*100)+'%';
+  stepTxt.textContent=(cur+1)+' / '+screens.length;
+  document.getElementById('scroll').scrollTop=0;
+  // 게이지 애니메이션
+  document.querySelectorAll('.screen.on [data-fill]').forEach(el=>{el.style.width='0';requestAnimationFrame(()=>setTimeout(()=>el.style.width=el.dataset.fill+'%',60));});
+  if(cur===2)runAnalyze();
+  if(cur===4)resetForm();
+}
+document.getElementById('back').onclick=()=>go(cur-1);
+document.addEventListener('click',e=>{
+  const g=e.target.closest('[data-go]'); if(g){go(+g.dataset.go);return;}
+  const chip=e.target.closest('.chip'); if(chip){const wrap=chip.parentElement;if(wrap.hasAttribute('data-single'))wrap.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));chip.classList.toggle('on');}
+});
+// SB-03 분석 → 인증 전환
+let analyzeT;
+function runAnalyze(){
+  const a=document.getElementById('analyzing'),b=document.getElementById('authBox'),c=document.getElementById('cnt');
+  a.style.display='';b.style.display='none';let n=0;clearInterval(analyzeT);
+  analyzeT=setInterval(()=>{n+=Math.floor(Math.random()*900+400);c.textContent=n.toLocaleString();},120);
+  setTimeout(()=>{clearInterval(analyzeT);c.textContent='12,840';a.style.display='none';b.style.display='';},2100);
+}
+// SB-05 제출 → 완료
+document.getElementById('submit').onclick=()=>{document.getElementById('form').style.display='none';document.getElementById('complete').style.display='';document.getElementById('scroll').scrollTop=0;};
+function resetForm(){document.getElementById('form').style.display='';document.getElementById('complete').style.display='none';}
+go(0);
+</script>
+</body>
+</html>
