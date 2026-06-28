@@ -15,6 +15,7 @@ function toast(msg, ms = 2200) {
 /* 큐레이션된 산출물 목록 */
 const GROUPS = [
   {
+    id: 'ambassador', icon: '🏨', client: '엠배서더호텔 그룹', period: '12억 · 10~11개월 · 분석',
     name: '엠배서더호텔 그룹 — 홈페이지 재구축',
     tag: '제안 분석 · 대외비',
     items: [
@@ -23,6 +24,7 @@ const GROUPS = [
     ],
   },
   {
+    id: 'meritz', icon: '🛡️', client: '메리츠화재 TM사업부문', period: '2년 운영 · 평가 80:20 · 제안',
     name: '메리츠화재 — 인터넷 마케팅 플랫폼 운영 제안',
     tag: '제안 패키지',
     items: [
@@ -35,6 +37,7 @@ const GROUPS = [
     ],
   },
   {
+    id: 'demo', icon: '🎓', client: '데모 · 레퍼런스', period: '모범 산출물 예시',
     name: '예시 — 청소년 동아리 통합 플랫폼',
     tag: '레퍼런스',
     items: [
@@ -44,6 +47,7 @@ const GROUPS = [
     ],
   },
   {
+    id: 'kb', icon: '📚', client: '내부 지식', period: '단일 진실 공급원',
     name: '지식베이스',
     tag: 'GoldWiki',
     items: [
@@ -62,13 +66,18 @@ function renderMd(text) {
   return '<pre style="white-space:pre-wrap">' + esc(clean) + '</pre>';
 }
 
-/* 갤러리 렌더 */
+/* 갤러리 렌더 — 프로젝트 레일 + 콘텐츠 */
 function renderGallery() {
   const m = $('#g-main');
+  const total = GROUPS.reduce((n, g) => n + g.items.length, 0);
+  const railItems = [`<button class="g-proj on" data-pid="all"><span class="g-proj-ic">🗂️</span><span class="g-proj-t"><b>전체 산출물</b><i>${total}개</i></span></button>`]
+    .concat(GROUPS.map(g => `<button class="g-proj" data-pid="${esc(g.id)}"><span class="g-proj-ic">${g.icon || '📁'}</span><span class="g-proj-t"><b>${esc(g.client || g.name)}</b><i>${g.items.length}개 · ${esc((g.period || '').split(' · ').pop())}</i></span></button>`));
+  const rail = `<aside class="g-rail"><div class="g-rail-h">프로젝트</div>${railItems.join('')}</aside>`;
+
   const hero = `<section class="g-hero">
     <div class="g-hero-k">DELIVERABLES</div>
-    <h1>산출물 쇼룸</h1>
-    <p>ClubSchool AI OS가 만든 산출물을 열람하고 <b>PDF·PPTX·DOCX</b>로 내려받을 수 있습니다. 설치·로그인 없이 바로 사용하세요.</p>
+    <h1 id="g-h1">산출물 쇼룸</h1>
+    <p id="g-sub">ClubSchool AI OS가 만든 산출물을 프로젝트별로 열람하고 <b>PDF·PPTX·DOCX</b>로 내려받으세요. 설치·로그인 없이 바로 사용.</p>
   </section>`;
   const controls = `<div class="g-controls">
     <input id="g-search" class="g-search" type="search" placeholder="산출물 검색…" />
@@ -78,38 +87,48 @@ function renderGallery() {
     </div>
   </div>`;
   const groups = GROUPS.map(g => `
-    <section class="g-group" data-group>
+    <section class="g-group" data-group data-gid="${esc(g.id)}">
       <div class="g-group-head"><h2>${esc(g.name)}</h2><span class="g-tag">${esc(g.tag)}</span></div>
-      <div class="g-cards">
-        ${g.items.map((it, i) => cardHtml(g, i, it)).join('')}
-      </div>
+      ${g.client ? `<div class="g-group-meta">${esc(g.client)} · ${esc(g.period || '')}</div>` : ''}
+      <div class="g-cards">${g.items.map((it, i) => cardHtml(g, i, it)).join('')}</div>
     </section>`).join('');
-  m.innerHTML = hero + controls + groups + '<div id="g-empty" class="g-empty hidden">검색 결과가 없습니다.</div>';
+  const content = `<div class="g-content">${hero}${controls}${groups}<div id="g-empty" class="g-empty hidden">검색 결과가 없습니다.</div></div>`;
+
+  m.innerHTML = `<div class="g-shell">${rail}${content}</div>`;
   m.querySelectorAll('[data-open]').forEach(b => b.onclick = () => openItem(JSON.parse(b.dataset.open)));
-  // 검색/필터 와이어
-  $('#g-search').addEventListener('input', applyFilter);
+  $('#g-search').addEventListener('input', applyView);
   m.querySelectorAll('.g-filter').forEach(b => b.onclick = () => {
-    m.querySelectorAll('.g-filter').forEach(x => x.classList.remove('on'));
-    b.classList.add('on'); applyFilter();
+    m.querySelectorAll('.g-filter').forEach(x => x.classList.remove('on')); b.classList.add('on'); applyView();
+  });
+  m.querySelectorAll('.g-proj').forEach(b => b.onclick = () => {
+    m.querySelectorAll('.g-proj').forEach(x => x.classList.remove('on')); b.classList.add('on'); applyView();
+    m.querySelector('.g-content').scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 }
 
-function applyFilter() {
+function applyView() {
   const q = ($('#g-search') ? $('#g-search').value : '').trim().toLowerCase();
   const kindBtn = document.querySelector('.g-filter.on');
   const kind = kindBtn ? kindBtn.dataset.kind : 'all';
+  const projBtn = document.querySelector('.g-proj.on');
+  const pid = projBtn ? projBtn.dataset.pid : 'all';
   let shown = 0;
-  document.querySelectorAll('.g-card').forEach(card => {
-    const text = (card.dataset.text || '').toLowerCase();
-    const k = card.dataset.kind || '';
-    const ok = (kind === 'all' || k === kind) && (!q || text.includes(q));
-    card.classList.toggle('hidden', !ok);
-    if (ok) shown++;
-  });
   document.querySelectorAll('.g-group[data-group]').forEach(g => {
-    const any = [...g.querySelectorAll('.g-card')].some(c => !c.classList.contains('hidden'));
+    const inProj = pid === 'all' || g.dataset.gid === pid;
+    let any = false;
+    g.querySelectorAll('.g-card').forEach(card => {
+      const ok = inProj && (kind === 'all' || card.dataset.kind === kind) && (!q || (card.dataset.text || '').toLowerCase().includes(q));
+      card.classList.toggle('hidden', !ok); if (ok) { any = true; shown++; }
+    });
     g.classList.toggle('hidden', !any);
   });
+  // 헤더: 단일 프로젝트 선택 시 제목 갱신
+  const g1 = $('#g-h1'), sub = $('#g-sub');
+  if (g1) {
+    const proj = GROUPS.find(x => x.id === pid);
+    if (pid !== 'all' && proj) { g1.textContent = proj.client || proj.name; sub.innerHTML = `${esc(proj.name)} · <b>${proj.items.length}개 산출물</b>`; }
+    else { g1.textContent = '산출물 쇼룸'; sub.innerHTML = 'ClubSchool AI OS가 만든 산출물을 프로젝트별로 열람하고 <b>PDF·PPTX·DOCX</b>로 내려받으세요.'; }
+  }
   const empty = $('#g-empty'); if (empty) empty.classList.toggle('hidden', shown > 0);
 }
 function badge(kind) { return { md: '문서', design: '디자인', proto: '프로토타입' }[kind] || ''; }
